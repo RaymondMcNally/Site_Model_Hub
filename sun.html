@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sun and Climate</title>
+<meta name="description" content="Sun path, shadow, aspect and climate for your site, for first-year architecture site analysis. ATU Sligo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/contours.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/kit.css">
+</head>
+<body>
+
+<header class="top" id="top"></header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">Climate · Light and shade · Orientation</div>
+      <h1>Where the <em>sun</em> reaches.</h1>
+      <p class="lede">The brief asks about orientation, sun and shadow, wind, rain and microclimate. This page works out the sun for <span data-site="name">the site</span> on any day of the year and shows where the ground itself casts shade. Then it sets you up to gather the weather data yourself.</p>
+      <p class="onpage"><a href="#sun">Sun and shadow</a> · <a href="#draw">Drawing it</a> · <a href="#climate">Wind and rain</a> · <a href="#micro">Microclimate</a></p>
+    </div>
+    <dl class="spec">
+      <div><dt>Latitude</dt><dd id="spLat">—</dd></div>
+      <div><dt>Longitude</dt><dd id="spLon">—</dd></div>
+      <div><dt>Midsummer noon sun</dt><dd id="spSum">—</dd></div>
+      <div><dt>Midwinter noon sun</dt><dd id="spWin">—</dd></div>
+      <div><dt>Longest day</dt><dd id="spLong">—</dd></div>
+      <div><dt>Shortest day</dt><dd id="spShort">—</dd></div>
+    </dl>
+  </div>
+
+  <section id="sun">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">01 · Sun and shadow</div>
+        <div>
+          <h2>Pick a day, move the sun</h2>
+          <p>Set the date and the time (local clock time, <span data-site="tz">Europe/Dublin</span>). The plan darkens wherever the ground blocks the sun. Switch to <strong>Hours of sun</strong> to see which parts of the site get most light over a whole day, or <strong>Aspect</strong> to see which way each slope faces.</p>
+        </div>
+      </div>
+
+      <div class="tool">
+        <div class="tool-top">
+          <div class="canvas-wrap"><canvas id="sunPlan" aria-label="Site plan with terrain shadows"></canvas></div>
+          <div class="readings">
+            <div class="row" role="group" aria-label="Map mode">
+              <button type="button" data-mode="shadow" aria-pressed="true">Shadow now</button>
+              <button type="button" data-mode="hours" aria-pressed="false">Hours of sun</button>
+              <button type="button" data-mode="aspect" aria-pressed="false">Aspect</button>
+            </div>
+            <div class="slider">
+              <label class="lbl" for="sunDate">Date</label>
+              <input type="range" id="sunDate" min="1" max="365" value="280">
+              <output id="dTxt">—</output>
+            </div>
+            <div class="row">
+              <button type="button" data-day="3-20">Equinox</button>
+              <button type="button" data-day="6-21">21 Jun</button>
+              <button type="button" data-day="12-21">21 Dec</button>
+              <button type="button" data-day="today">Today</button>
+            </div>
+            <div class="slider">
+              <label class="lbl" for="sunTime">Time</label>
+              <input type="range" id="sunTime" min="0" max="24" step="0.25" value="13">
+              <output id="tTxt">—</output>
+            </div>
+            <div class="row"><button type="button" id="playDay">Play the day</button></div>
+            <dl class="rd">
+              <div><dt>Sunrise</dt><dd id="rRise">—</dd></div>
+              <div><dt>Sunset</dt><dd id="rSet">—</dd></div>
+              <div><dt>Daylight</dt><dd id="rLen">—</dd></div>
+              <div><dt>Highest sun</dt><dd id="rNoon">—</dd></div>
+              <div><dt>Sun height now</dt><dd id="rAlt">—</dd></div>
+              <div><dt>Sun bearing</dt><dd id="rAz">—</dd></div>
+              <div><dt>Shadow of a 1 m post</dt><dd id="rShadow">—</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="legendbar" id="legend"></div>
+        <div class="sky3d">
+          <div class="sky-head">
+            <div><div class="lbl">Sun path in 3D</div><p class="small" style="margin:2px 0 0">The sun's track over the site for the chosen day (red), with 21 June, the equinox and 21 December for comparison. Drag to look around; press <strong>Play the day</strong> to watch it rise and set.</p></div>
+            <div class="row" role="group" aria-label="3D camera">
+              <button type="button" data-cam="se" aria-pressed="true">Looking south</button>
+              <button type="button" data-cam="ground" aria-pressed="false">Stand on site</button>
+              <button type="button" data-cam="top" aria-pressed="false">From above</button>
+            </div>
+          </div>
+          <div class="sky-stage" id="skyStage"><canvas id="skyGL" aria-label="3D model of the site with the sun's path across the sky"></canvas><div class="sky-clock" id="skyClock"></div><div class="hint">Drag to orbit · scroll to zoom</div></div>
+        </div>
+        <div class="pathwrap">
+          <figure class="pathfig">
+            <svg id="sunPath" viewBox="0 0 320 320" role="img" aria-label="Sun path diagram for the site"></svg>
+            <figcaption>Sun path seen from above, north up. Rings mark the sun's height. Dashed: 21 June, the equinoxes and 21 December. Red: your chosen day. Gold: the sun now.</figcaption>
+          </figure>
+          <div class="prose">
+            <h3>What the model can and can't tell you</h3>
+            <p>The shadows come from the terrain model: the banks, hollows and slopes inside the surveyed area.</p>
+            <p><strong>Trees and buildings are probably not in it.</strong> Most terrain models are bare earth, with the canopy and structures removed. On site, much of the shade comes from them, so stand where you'd build and look.</p>
+            <p><strong>Distant hills are not in it either.</strong> High ground outside the survey can hide a low sun altogether, in winter and early or late in the day. Sketch the skyline on site and note where the sun drops behind it.</p>
+            <p>Calculations use the site's position, <span data-site="ll">—</span>, and local clock time in <span data-site="tz">Europe/Dublin</span>, including summer time.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="draw">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">02 · Drawing it</div>
+        <div>
+          <h2>Putting the sun on your site analysis plan</h2>
+          <p>On a trace overlay of the 1:500 plan, record the sun the way architects do. Keep it simple, consistent and labelled.</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li><div class="n">Sun arcs</div><div><p>Draw three arcs around your site: 21 June, the equinox and 21 December. Mark sunrise and sunset bearings and the time on each. Use the <strong>Sun bearing</strong> readout above with the north point on your sheet.</p></div></li>
+        <li><div class="n">Shade</div><div><p>Hatch the ground that's in shade at a few key times, such as 10:00, 13:00 and 16:00 on the day of your visit, and again in midwinter. Take the shadow from this page, then correct it on site for trees and the skyline.</p></div></li>
+        <li><div class="n">Aspect</div><div><p>Mark the slopes that face south and catch the sun, and the slopes that face north and stay cold and damp. Outdoor rooms, entrances and places to sit want the warm, sheltered spots.</p></div></li>
+        <li><div class="n">Check on site</div><div><p>Photograph the same spot at different times. Note where puddles, moss and frost sit; they show you where the sun doesn't reach.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="climate">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">03 · Wind and rain</div>
+        <div>
+          <h2>The weather the site faces</h2>
+          <p>Start with the region, then narrow it down to the valley. Your group dossier needs both.</p>
+        </div>
+      </div>
+      <div class="two">
+        <div class="prose">
+          <h3>The region</h3>
+          <p><strong>Wind.</strong> Ireland's prevailing wind blows from between south and west, off the Atlantic. Winds are strongest in the north and west, and gales are most frequent on northern coasts.</p>
+          <p><strong>Rain.</strong> The west of Ireland gets about 1,000–1,400 mm of rain a year, and many mountain districts get more than 2,000 mm. The east is drier. Sites near high ground get the wetter end of the range.</p>
+          <p class="small">Source: Met Éireann, <a href="https://www.met.ie/climate/what-we-measure/wind" target="_blank" rel="noopener">Wind</a> and <a href="https://www.met.ie/climate/what-we-measure/rainfall" target="_blank" rel="noopener">Rainfall</a>.</p>
+        </div>
+        <div class="prose">
+          <h3>Gather it yourself</h3>
+          <ul class="ticks">
+            <li>Find the nearest Met Éireann stations to your site on the <a href="https://www.met.ie/climate/available-data/historical-data" target="_blank" rel="noopener">historical data</a> page and download monthly rainfall, temperature and wind.</li>
+            <li>Draw a <strong>wind rose</strong>: how often the wind comes from each direction, and how strong.</li>
+            <li>Draw monthly <strong>rainfall and temperature</strong> as a simple bar and line chart.</li>
+            <li>On site, note the wind on the day: direction, gusts, where it's still.</li>
+            <li>State the station name and distance from the site on every chart.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="ctool" id="charts">
+        <div class="ctool-head">
+          <div>
+            <h3>Make your own rainfall chart and wind rose</h3>
+            <p class="small">Download a station file from Met Éireann and drop it here. Everything happens in your browser; nothing is uploaded.</p>
+          </div>
+          <ol class="csteps">
+            <li>Open Met Éireann's <a href="https://www.met.ie/climate/available-data/historical-data" target="_blank" rel="noopener">historical data</a> page and choose the nearest station to your site. Synoptic stations have full hourly records, including wind; outside Ireland, use the national weather service.</li>
+            <li>Download the <strong>hourly</strong> file for a wind rose and rainfall, or the <strong>monthly</strong> or <strong>daily</strong> file for rainfall only. Unzip it if needed: you want the .csv.</li>
+            <li>Drop the CSV below. Pick the years (a 30-year span such as 1991–2020 is the standard climate average) and, for wind, the season.</li>
+          </ol>
+        </div>
+        <div class="cload">
+          <label class="drop" id="cDrop" for="cFile"><input type="file" id="cFile" accept=".csv,text/csv"><span><b>Drop a CSV here</b> or click to choose</span><small>Met Éireann monthly (mly), daily (dly) or hourly (hly) files, or a filled-in template</small></label>
+          <div class="cctrl">
+            <div class="cfield"><label class="lbl" for="cYear0">From</label><select id="cYear0"></select></div>
+            <div class="cfield"><label class="lbl" for="cYear1">To</label><select id="cYear1"></select></div>
+            <div class="cfield"><label class="lbl" for="cSeason">Wind season</label><select id="cSeason"><option value="all">All year</option><option value="djf">Winter (Dec–Feb)</option><option value="mam">Spring (Mar–May)</option><option value="jja">Summer (Jun–Aug)</option><option value="son">Autumn (Sep–Nov)</option></select></div>
+            <button type="button" id="cExample">Show example</button>
+          </div>
+        </div>
+        <p class="cstatus" id="cStatus" data-state="example"></p>
+        <div class="cgrid">
+          <figure class="cfig">
+            <svg id="rainSvg" viewBox="0 0 760 380" role="img" aria-label="Monthly rainfall bar chart"></svg>
+            <figcaption><span id="rainNote"></span>
+              <span class="row"><button type="button" id="rainPNG">Save PNG</button><button type="button" id="rainCSV">Save table (CSV)</button><button type="button" data-toggle="rainTable" aria-pressed="false">Show table</button></span>
+            </figcaption>
+            <div class="tbl-wrap" id="rainTable" hidden></div>
+          </figure>
+          <figure class="cfig">
+            <svg id="windSvg" viewBox="0 0 620 600" role="img" aria-label="Wind rose"></svg>
+            <figcaption><span>Each spoke shows how often the wind blows <em>from</em> that direction; colours split it by speed.</span>
+              <span class="row"><button type="button" id="windPNG">Save PNG</button><button type="button" id="windCSV">Save table (CSV)</button><button type="button" data-toggle="windTable" aria-pressed="false">Show table</button></span>
+            </figcaption>
+            <div class="tbl-wrap" id="windTable" hidden></div>
+          </figure>
+        </div>
+        <p class="small ctemplates">No file? Fill in a template by hand from another source and drop it in: <a href="downloads/climate/rainfall_template.csv" download>rainfall template</a> (mm per month) · <a href="downloads/climate/wind_template.csv" download>wind template</a> (% of time from each of 16 directions). Always name the station, its distance from the site and the years on your chart.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="micro">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">04 · Microclimate</div>
+        <div>
+          <h2>How the valley changes the weather</h2>
+          <p>The weather on a sheltered site can be very different from the open ground a few kilometres away. These are things to look and feel for on the site visit.</p>
+        </div>
+      </div>
+      <div class="forms">
+        <div class="form"><strong>Shelter</strong><span>Trees, banks, walls and buildings slow the wind. Where is it calm enough to sit?</span></div>
+        <div class="form"><strong>Funnelling</strong><span>Valleys, streets and gaps between buildings channel wind along their length. Does the wind follow them?</span></div>
+        <div class="form"><strong>Cold air</strong><span>On still nights cold air drains downhill and pools on low ground. Hollows and watercourses will be the frostiest places.</span></div>
+        <div class="form"><strong>Damp</strong><span>North-facing banks and deep shade stay wet. Look for moss, ferns and standing water.</span></div>
+        <div class="form"><strong>Warm spots</strong><span>Open, south-facing ground catches the low sun. Use the Aspect map to find candidates, then check them on site.</span></div>
+        <div class="form"><strong>Sound</strong><span>Water, wind, traffic and birds are part of the climate of a place. Where can you hear them, and where can you hear yourself?</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="index.html">All sites →</a></div>
+</footer>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="js/sitekit.js"></script>
+<script src="js/site.js"></script>
+<script src="js/sun.js"></script>
+<script src="js/climate.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+/* Your model page */
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+.cfield input[type=text]{font:500 .9rem var(--display);background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:3px;padding:7px 9px;width:100%}
+.cfield select{width:100%}
+.check{display:flex;flex-direction:column;gap:2px;font-size:.88rem;cursor:pointer;padding-bottom:4px}
+.check span{display:flex;align-items:center}
+.check input{margin-right:6px;accent-color:var(--accent)}
+.check small{font:.72rem var(--mono);color:var(--muted)}
+.mstatus{margin:0;padding:8px 10px;border-left:4px solid var(--muted);background:var(--bg);font-size:.86rem}
+.mstatus[data-state="ok"]{border-color:var(--flat)} .mstatus[data-state="warn"]{border-color:var(--gold)} .mstatus[data-state="err"]{border-color:var(--cut)}
+.mbtns{display:flex;flex-direction:column;gap:8px}
+button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);padding:10px 12px;font-size:.84rem}
+button.primary:hover{opacity:.9}
+#pickPlan{cursor:move}
+#pickPlan:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pcard{border:1px solid var(--rule);background:var(--paper);display:flex;flex-direction:column;min-width:0}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--rule)}
+.p3d{position:relative;aspect-ratio:4/3;max-width:100%;background:var(--stage)}
+.p3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+.p3d .hint{position:absolute;left:10px;bottom:8px;font:.7rem var(--mono);color:var(--muted)}
+.psheet{padding:12px;display:flex;align-items:center;justify-content:center;flex:1;min-height:260px}
+.psheet svg{width:100%;height:auto;background:#fff;border:1px solid var(--rule)}
+.psheet svg path{vector-effect:non-scaling-stroke;stroke-width:1px}
+@media (max-width:860px){.pgrid,.mrow{grid-template-columns:1fr}}
+
+/* output choice: card model, 3D print model or plaster mould */
+main[data-out="card"] :is(.only-print,.only-model,.only-mould), main:not([data-out="card"]) .only-card,
+main[data-out="print"] .only-mould, main[data-out="mould"] .only-model{display:none!important}
+main[data-out="cnc"] :is(.only-print,.only-model,.only-mould,.hide-cnc), main:not([data-out="cnc"]) .only-cnc{display:none!important}
+/* laser cutter kinds, and class tile mode */
+main:not([data-kind="layers"]) .only-layers, main:not([data-kind="waffle"]) .only-waffle, main:not([data-kind="relief"]) .only-relief, main[data-kind="relief"] .not-relief, main:not([data-tile="on"]) .only-tile{display:none!important}
+.psheet.prelief img{width:100%;max-width:420px;height:auto;image-rendering:auto;border:1px solid var(--rule);background:#000}
+.seg3 button{font-size:.74rem;padding:7px 4px}
+.outsel{display:flex;flex-direction:column;gap:6px}
+.outbtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.outbtns{grid-template-columns:1fr}}
+.outbtns button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:10px;border-radius:3px;min-width:0}
+.outbtns button b{font:700 .98rem var(--display);letter-spacing:-.01em}
+.outbtns button small{font:.68rem var(--mono);color:var(--muted);line-height:1.3}
+.outbtns button[aria-pressed=true] small{color:color-mix(in srgb,var(--paper) 75%,transparent)}
+.seg{display:flex}.seg button{flex:1;border-radius:0}.seg button+button{border-left:0}
+.seg button:first-child{border-radius:3px 0 0 3px}.seg button:last-child{border-radius:0 3px 3px 0}
+.psheet.pbed svg{width:100%;height:auto;max-width:400px;background:var(--paper);border:0}
+.psheet.pcnc{flex-direction:column;gap:10px}
+.psheet.pcnc svg{width:100%;height:auto;background:var(--paper);border:0}
+.seg4 button{font-size:.8rem;padding:7px 4px;font-variant-numeric:tabular-nums}
+#scaleNote{display:block;margin-top:6px;color:var(--muted)}

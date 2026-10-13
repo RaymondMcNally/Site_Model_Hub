@@ -1,0 +1,32 @@
+/* Projection page. The projector window (html.proj-out) is a black page holding only the mapped image. */
+.pj-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; align-items: start }
+.pj-left { position: sticky; top: 70px; display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.pj-preview { position: relative; background: #000; border: 1px solid var(--rule); aspect-ratio: 16 / 10; max-width: 100%; touch-action: none }
+.pj-preview canvas, .pj-out canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block }
+.pj-preview:fullscreen { border: 0; aspect-ratio: auto; width: 100vw; height: 100vh }
+.pj-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+.pj-link { font: .74rem var(--mono); color: var(--muted) }
+.pj-link[data-on="1"] { color: var(--flat, #4e7a4a) }
+.pj-panel { display: flex; flex-direction: column; gap: 14px; min-width: 0 }
+.pj-group { border: 1px solid var(--rule); background: var(--paper); padding: 14px; display: flex; flex-direction: column; gap: 9px }
+.pj-group h3 { margin: 0; font: 500 .7rem var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted) }
+.pj-l { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .92rem }
+.pj-l input[type=checkbox] { accent-color: var(--accent) }
+.pj-l select { margin-left: auto }
+.pj-l output { margin-left: auto; font: .74rem var(--mono); color: var(--muted) }
+.pj-l input[type=file] { font: .72rem var(--mono); max-width: 100%; margin-left: auto }
+.pj-key { margin-left: auto; font: .7rem var(--mono); color: var(--muted); display: inline-flex; gap: 6px; align-items: center }
+.pj-key i { display: inline-block; width: 10px; height: 10px; background: var(--c) }
+.pj-group input[type=range] { width: 100%; accent-color: var(--accent) }
+.pj-group input[type=date] { font: 500 .82rem var(--mono); background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 3px; padding: 5px 8px; width: 100% }
+kbd { font: .72rem var(--mono); border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; background: var(--paper) }
+
+/* projector window */
+html.proj-out, html.proj-out body { background: #000; height: 100%; overflow: hidden; margin: 0 }
+html.proj-out header, html.proj-out main, html.proj-out footer { display: none !important }
+html.proj-out .pj-out { display: block !important; position: fixed; inset: 0; background: #000; cursor: none }
+html.proj-out .pj-out.cal { cursor: crosshair }
+.pj-hint { position: absolute; left: 16px; bottom: 12px; margin: 0; font: 12px var(--mono); color: #777; transition: opacity .6s }
+.pj-out.quiet .pj-hint { opacity: 0 }
+
+@media (max-width: 900px) { .pj-grid { grid-template-columns: 1fr } .pj-left { position: static } }

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Projection</title>
+<meta name="description" content="Project contours, sun and shadow, flooding, slope and your own drawings onto a physical site model. ATU Sligo, Site Model Kit.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/model.css">
+<link rel="stylesheet" href="css/project.css">
+<script>
+/* project.html?out is the projector window: black page, the mapped image only. */
+if (/[?&]out\b/.test(location.search)) document.documentElement.classList.add('proj-out');
+</script>
+</head>
+<body>
+<header class="top" id="top"></header>
+
+<main id="main">
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">Projection mapping</div>
+      <h1>Light on the <em>ground</em>.</h1>
+      <p class="lede">Hang a projector over a white site model, line it up once, and project contours, sun and shadow, rising water, slopes or your own drawings straight onto the terrain. The page corrects for the height of the model, so the image lands on the hills, not beside them.</p>
+      <p class="onpage"><a href="#stage">Projector</a> · <a href="#setup">Setting up</a></p>
+    </div>
+    <dl class="spec">
+      <div><dt>Projector</dt><dd>pointing straight down</dd></div>
+      <div><dt>Model</dt><dd>matte white</dd></div>
+      <div><dt>Lens height</dt><dd id="specH">1400 mm</dd></div>
+      <div><dt>Output</dt><dd id="specOut">1920 × 1200</dd></div>
+      <div><dt>Calibration</dt><dd>4 corners + height</dd></div>
+      <div><dt>Layers</dt><dd>9</dd></div>
+    </dl>
+  </div>
+
+  <section id="stage">
+    <div class="wrap">
+      <div class="pj-grid">
+        <div class="pj-left">
+          <div class="pj-preview" id="pvWrap">
+            <canvas id="pv" aria-label="Preview of the projector image"></canvas>
+            <canvas id="pvOv" aria-hidden="true"></canvas>
+          </div>
+          <div class="pj-bar">
+            <button type="button" class="primary" id="openOut">Open projector window</button>
+            <button type="button" id="fullHere">Full screen here</button>
+            <span class="pj-link" id="link">No projector window yet</span>
+          </div>
+          <p class="small">Drag the projector window onto the projector's screen, click it, then press <kbd>F</kbd> for full screen. If your laptop simply mirrors to the projector, use <b>Full screen here</b> instead. <kbd>C</kbd> shows the calibration handles in either window; <kbd>Esc</kbd> leaves full screen.</p>
+        </div>
+
+        <div class="pj-panel">
+          <div class="pj-group">
+            <h3>Model on the table</h3>
+            <div class="cfield"><label class="lbl" for="pArea">Model</label>
+              <select id="pArea"><option value="site">Whole survey</option><option value="tiles">Class tile model (all tiles)</option><option value="square">Your model square</option></select></div>
+            <div class="mrow">
+              <div class="cfield"><label class="lbl" for="pBase" title="Height of the lowest ground above the surface the corners are pinned to">Base under lowest ground</label>
+                <select id="pBase"><option value="0">0 mm</option><option value="3" selected>3 mm (3D print)</option><option value="6">6 mm</option><option value="10">10 mm (plaster cast)</option><option value="20">20 mm</option></select></div>
+              <div class="cfield"><label class="lbl" for="pVex">Heights</label>
+                <select id="pVex"><option value="1" selected>True scale</option><option value="1.5">1.5×</option><option value="2">2×</option></select></div>
+            </div>
+            <p class="small" id="areaNote">—</p>
+          </div>
+
+          <div class="pj-group">
+            <h3>Layers</h3>
+            <label class="pj-l"><input type="checkbox" id="lElev" checked> Elevation colours</label>
+            <label class="pj-l"><input type="checkbox" id="lHill" checked> Hillshade</label>
+            <label class="pj-l"><input type="checkbox" id="lCont" checked> Contours <select id="pCI" aria-label="Contour interval"><option value="0.5">0.5 m</option><option value="1" selected>1 m</option><option value="2">2 m</option><option value="5">5 m</option></select></label>
+            <label class="pj-l"><input type="checkbox" id="lSlope"> Slope for access <span class="pj-key"><i style="--c:#f2b632"></i>1:20–1:12 <i style="--c:#e5533d"></i>steeper</span></label>
+            <label class="pj-l"><input type="checkbox" id="lFeat" checked> Site features</label>
+            <label class="pj-l"><input type="checkbox" id="lFlood"> Water level <output id="oFlood">—</output></label>
+            <input type="range" id="pFlood" min="0" max="1000" value="200" aria-label="Water level">
+            <label class="pj-l"><input type="checkbox" id="lSun"> Sun and shadow <output id="oSun">—</output></label>
+            <div class="mrow pj-sun">
+              <div class="cfield"><label class="lbl" for="pDate">Date</label><input type="date" id="pDate"></div>
+              <div class="cfield"><label class="lbl">&nbsp;</label><button type="button" id="pPlay">Play the day</button></div>
+            </div>
+            <input type="range" id="pTime" min="0" max="1000" value="500" aria-label="Time of day">
+            <label class="pj-l"><input type="checkbox" id="lImg"> Your image <input type="file" id="pImg" accept="image/*" aria-label="Choose an image"></label>
+            <input type="range" id="pImgOp" min="10" max="100" value="85" aria-label="Image strength">
+            <p class="small">Images are stretched to the model's outline, north up: crop a plan or aerial photo to the same square before you load it.</p>
+          </div>
+
+          <div class="pj-group">
+            <h3>Calibration</h3>
+            <label class="pj-l"><input type="checkbox" id="lCal"> Show handles and the alignment grid</label>
+            <div class="cfield"><label class="lbl" for="pH">Lens height above the corners · <span id="oH">1400 mm</span></label><input type="range" id="pH" min="500" max="2500" step="5" value="1400"></div>
+            <div class="mrow">
+              <div class="cfield"><label class="lbl" for="pNx">Projector east · <span id="oNx">0 mm</span></label><input type="range" id="pNx" min="-900" max="900" step="5" value="0"></div>
+              <div class="cfield"><label class="lbl" for="pNy">Projector north · <span id="oNy">0 mm</span></label><input type="range" id="pNy" min="-900" max="900" step="5" value="0"></div>
+            </div>
+            <div class="pj-bar"><button type="button" id="pReset">Reset corners</button><select id="pAspect" aria-label="Projector shape"><option value="1.6" selected>16:10 (1920 × 1200)</option><option value="1.7778">16:9 (1920 × 1080)</option><option value="1.3333">4:3</option></select></div>
+            <p class="small">1. Drag the four orange corners onto the corners of the model's base. 2. The red crosshairs mark the highest points: move the sliders until they sit on the real hilltops. Settings are saved for this site and model.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="setup">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Setting up</div>
+        <div><h2>Projector, model and room</h2><p>Once it is set up, calibration takes a couple of minutes and is remembered.</p></div>
+      </div>
+      <ol class="steps">
+        <li><div class="n">Projector</div><div><p>Mount it pointing straight down over the table: a ceiling bracket, or a tripod with a boom arm. Check the projector supports being pointed downwards (on Panasonic installation projectors this is free or 360° installation); set its keystone correction to off, and use the zoom to make the image just bigger than the model.</p></div></li>
+        <li><div class="n">Model</div><div><p>Projection needs a matte white surface: plaster casts from the mould are ideal, white PLA prints work well, and carved MDF or card models need a coat of matte white primer. Darken the room.</p></div></li>
+        <li><div class="n">Calibrate</div><div><p>Turn on <b>Show handles</b>. Drag the four corners onto the corners of the model's base, then set the lens height (measured from the table) and move the projector east and north until the red crosshairs land on the real hilltops. The grid and contours should now hug the terrain.</p></div></li>
+        <li><div class="n">Teach</div><div><p>Play the sun through a day in December and in June, raise the water to find the flood line, show where slopes are too steep for an accessible route, or load a student's site plan to project their proposal onto the ground.</p></div></li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<div class="pj-out" id="outStage" hidden>
+  <canvas id="out" aria-label="Projector image"></canvas>
+  <canvas id="outOv" aria-hidden="true"></canvas>
+  <p class="pj-hint" id="outHint">Projector window · click, then press F for full screen · C for calibration handles</p>
+</div>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="advanced.html" data-sitelink>Advanced →</a></div>
+</footer>
+
+<script src="vendor/three.min.js"></script>
+<script src="js/sitekit.js"></script>
+<script src="js/site.js"></script>
+<script src="js/project.js"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Site Model Kit Advanced</title>
+<meta name="description" content="Advanced tools in the Site Model Kit: sections through a 3D scan of the site, projection onto a physical model, and adding a new site. ATU Sligo, Department of Architecture.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/contours.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/kit.css">
+<style>
+.adv{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.adv .pagecard{padding:18px 18px 16px}
+.adv .pagecard strong{font-size:1.15rem}
+.adv .pagecard .need{font:500 .72rem var(--mono);color:var(--muted);margin-top:auto;padding-top:6px;border-top:1px dashed var(--rule)}
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow"><span data-site="name">The site</span> · beyond the basics</div>
+      <h1>Advanced.</h1>
+      <p class="lede">Sections cut through a 3D scan of the site, projecting drawings onto a physical model, and adding a new site. Students don't need these for a first site analysis: contour drawings, sun studies and models all come from <a href="contours.html" data-sitelink>Contours</a>, <a href="sun.html" data-sitelink>Sun &amp; climate</a>, the <a href="kit.html" data-sitelink>Model kit</a> and <a href="model.html" data-sitelink>Your model</a>. Come here when your tutor sends you, or when you want to go further.</p>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="adv">
+        <a class="pagecard" href="sections.html" data-sitelink><span class="st live">Tool</span><strong>Sections</strong><span>Cut the site's 3D scan (a Gaussian splat), or one you load yourself, along any line and draw a section with solid ground from the survey. Download it as PDF or SVG at 1:100, 1:200 or 1:500.</span><span class="need">Useful for: site sections with trees and buildings</span></a>
+        <a class="pagecard" href="project.html" data-sitelink><span class="st live">Workshop</span><strong>Projection</strong><span>Project contours, shadows, slopes and your own drawings onto a physical site model from a projector above it.</span><span class="need">Useful for: crits and exhibitions; staff set it up</span></a>
+        <a class="pagecard" href="setup.html"><span class="st live">Staff</span><strong>Add a site</strong><span>Turn a terrain STL, or free lidar tiles from the GSI open data (GeoTIFF), into a new site: location, levels, and the main features traced or imported from QGIS or CAD.</span><span class="need">Useful for: next year's site, or a student's own site</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="index.html" data-sitelink>Sites →</a></div>
+</footer>
+
+<script src="js/sitekit.js"></script>
+<script src="js/site.js"></script>
+<script>
+(async function () { const G = await window.loadSite('advanced.html', { allowEmpty: true }); if (G) fillSite(G); })();
+</script>
+</body>
+</html>

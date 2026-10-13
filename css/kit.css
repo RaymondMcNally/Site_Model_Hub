@@ -1,0 +1,54 @@
+/* Site Model Kit additions: header switcher, site cards, setup page, progress. */
+.top .navrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.switch select{font:500 .78rem var(--mono);max-width:240px;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:3px;padding:5px 8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.notice{margin:16px 0 0;padding:10px 12px;border-left:4px solid var(--gold,#d99a1e);background:var(--paper);font-size:.9rem}
+.nosite{padding-block:60px}
+.nosite h1{font-size:clamp(2rem,5vw,3.2rem)}
+
+.sitegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.sitecard{border:1px solid var(--rule);background:var(--paper);padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.sitecard.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.sitecard canvas{width:100%;height:auto;display:block;background:var(--stage);aspect-ratio:3/2;object-fit:contain}
+.sitecard h3{margin:0;font-size:1.1rem}
+.sitecard .where{font:500 .68rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sitecard .facts{font:.8rem var(--mono);color:var(--muted);margin:0}
+.sitecard .row{margin-top:auto}
+.sitecard.add{align-items:flex-start;justify-content:center;border-style:dashed;text-decoration:none;min-height:200px}
+.sitecard.add strong{font-size:1.15rem}
+.btnlink{display:inline-block;font:500 .8rem var(--mono);padding:7px 11px;border:1px solid var(--rule);border-radius:3px;background:var(--paper);color:var(--ink);text-decoration:none;cursor:pointer}
+.btnlink.primary,button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.danger{color:var(--cut)}
+
+.form2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.form2 .full{grid-column:1/-1}
+.cfield input[type=text],.cfield input[type=number],.cfield input[type=url],.cfield textarea,.cfield select{font:500 .9rem var(--display);background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:3px;padding:7px 9px;width:100%}
+.cfield textarea{min-height:70px;resize:vertical;font-size:.85rem;line-height:1.4}
+.cfield .hint{font:.72rem var(--mono);color:var(--muted);margin-top:3px;display:block}
+.prog{height:8px;background:var(--stage);border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.stepcard{border:1px solid var(--rule);background:var(--paper);padding:18px}
+.stepcard + .stepcard{margin-top:14px}
+.stepcard[aria-disabled="true"]{opacity:.5;pointer-events:none}
+.summary{font:.86rem var(--mono);margin:10px 0 0;padding:10px 12px;background:var(--bg);border-left:4px solid var(--flat,#5b8c5a)}
+.summary[data-state="err"]{border-color:var(--cut)}
+.summary[data-state="warn"]{border-color:var(--gold,#d99a1e)}
+
+.fedit{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+.fedit .canvas-wrap{position:relative;border:1px solid var(--rule);background:var(--paper)}
+.fedit canvas{display:block;width:100%;cursor:crosshair;touch-action:none}
+.fedit .mode{position:absolute;left:10px;top:10px;font:600 .72rem var(--mono);background:var(--ink);color:var(--paper);padding:4px 8px;border-radius:3px}
+.flist{list-style:none;margin:0;padding:0;border:1px solid var(--rule);max-height:240px;overflow:auto;background:var(--paper)}
+.flist li{display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--rule);cursor:pointer;font-size:.86rem}
+.flist li:last-child{border-bottom:0}
+.flist li.on{background:var(--bg);box-shadow:inset 3px 0 0 var(--accent)}
+.flist li .k{font:500 .66rem var(--mono);text-transform:uppercase;color:var(--muted);margin-left:auto}
+.flist .sw{width:14px;height:4px;border-radius:2px;flex:none}
+.tools{display:flex;flex-direction:column;gap:12px;min-width:0}
+details.more{border:1px solid var(--rule);background:var(--paper);padding:10px 14px}
+details.more summary{cursor:pointer;font-weight:600}
+code.blk{display:block;white-space:pre-wrap;font:.78rem var(--mono);background:var(--bg);border:1px solid var(--rule);padding:10px;overflow-x:auto}
+@media (max-width:860px){.form2,.fedit{grid-template-columns:1fr}}
+.slicer .plan canvas{flex:none}
+.slicer .plan .ctrl{margin-top:auto}
+#kScaleNote[data-state="warn"]{color:var(--cut)}

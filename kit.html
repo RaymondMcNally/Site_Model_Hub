@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Site Model Kit</title>
+<meta name="description" content="Laser-cut contour model of the whole site at 1:200: cutting sheets, assembly guide, contour plan and an interactive 3D build guide.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/contours.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/model.css">
+<link rel="stylesheet" href="css/kit.css">
+</head>
+<body>
+<header class="top" id="top"></header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">Whole-site model · <span data-kscale>1:200</span></div>
+      <h1><span data-site="name">The site</span>,<br>layer by <em>layer</em>.</h1>
+      <p class="lede">A contour model of the whole survey, one board layer per contour. This page works out the laser sheets for the open site, then shows where every piece goes. New to contours? Start with <a href="contours.html" data-sitelink>Reading contours</a>. Want just your own area? <a href="model.html" data-sitelink>Make your own square</a>.</p>
+      <p class="onpage"><a href="#site">Site</a> · <a href="#kit">Kit</a> · <a href="#build">Instructions</a> · <a href="#assemble">Assembly</a></p>
+    </div>
+    <dl class="spec">
+      <div><dt>Scale</dt><dd data-kscale>1:200</dd></div>
+      <div><dt>Layer</dt><dd id="kInt">—</dd></div>
+      <div><dt>Layers</dt><dd id="kLayers">—</dd></div>
+      <div><dt>Pieces</dt><dd id="kPieces">—</dd></div>
+      <div><dt>Footprint</dt><dd id="kFoot">—</dd></div>
+      <div><dt>Height</dt><dd id="kHeight">—</dd></div>
+      <div><dt>Board</dt><dd id="kBoard">—</dd></div>
+      <div><dt>Baseboard</dt><dd id="kBase">—</dd></div>
+    </dl>
+  </div>
+
+  <section id="site">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">01 · The site</div>
+        <div>
+          <h2 data-site="name">The site</h2>
+          <p id="siteNotes">Explore the survey before you start cutting: find the main features and the steep ground you'll be building up in board.</p>
+        </div>
+      </div>
+      <div id="embedWrap" hidden>
+        <div class="frame"><iframe id="embed" title="3D survey of the site" loading="lazy" allow="fullscreen; xr-spatial-tracking" allowfullscreen></iframe></div>
+        <div class="frame-note"><span>3D survey</span><a id="embedLink" target="_blank" rel="noopener">Open full screen ↗</a></div>
+      </div>
+      <div id="planWrap" class="figure"><canvas id="kitPlan" aria-label="Contour plan of the site with the tile grid" style="display:block;width:100%"></canvas><figcaption>Contour plan, with the tile grid used to cut the layers into pieces (odd layers solid, even layers dashed: the joints never stack).</figcaption></div>
+    </div>
+  </section>
+
+  <section id="kit">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">02 · The kit</div>
+        <div>
+          <h2>Laser sheets and guides</h2>
+          <p>Choose the scale, the board and the laser bed, then make the kit. It takes up to a minute for a large site. DXF and SVG carry the same linework, so use whichever your laser software prefers.</p>
+        </div>
+      </div>
+      <div class="tool">
+        <div class="readings" style="border:0">
+          <div class="form2">
+            <div class="cfield"><label class="lbl" for="kScale">Model scale</label><select id="kScale"><option value="100">1:100</option><option value="200">1:200</option><option value="500">1:500</option><option value="1000">1:1000</option></select><span class="hint" id="kScaleNote"></span></div>
+            <div class="cfield"><label class="lbl" for="kBoardSel">Board thickness</label><select id="kBoardSel"></select></div>
+            <div class="cfield"><label class="lbl" for="kSheet">Laser sheet</label><select id="kSheet"><option value="841x594">A1 · 841 × 594 mm</option><option value="594x420">A2 · 594 × 420 mm</option><option value="600x400">Bed · 600 × 400 mm</option><option value="900x600">Bed · 900 × 600 mm</option><option value="1000x600">Bed · 1000 × 600 mm</option></select></div>
+            <div class="cfield"><label class="lbl" for="kTile">Largest piece</label><select id="kTile"><option value="300">300 mm tiles</option><option value="400" selected>400 mm tiles</option><option value="500">500 mm tiles</option></select><span class="hint">Layers are cut into tiles no bigger than this</span></div>
+            <div class="cfield" style="align-self:end"><button type="button" class="primary" id="kGo">Make the kit</button></div>
+          </div>
+          <div class="prog" id="kProg" hidden style="margin-top:12px"><i></i></div>
+          <p class="mstatus" id="kStatus" style="margin-top:12px">Press Make the kit to work out the laser sheets for this site.</p>
+          <div class="row" style="margin-top:12px">
+            <button type="button" id="dlZip" disabled>Laser sheets (ZIP)</button>
+            <button type="button" id="dlGuide" disabled>Assembly guide (PDF)</button>
+            <button type="button" id="dlDXF" disabled>Contour plan <span data-kscale>1:200</span> (DXF)</button>
+          </div>
+        </div>
+      </div>
+      <div class="legend" style="margin-top:16px"><span><i style="border-color:var(--cut)"></i>Cut — layer <code>CUT</code></span><span><i style="border-color:var(--engrave)"></i>Engrave / score — layer <code>ENGRAVE</code></span><span>Grey frame = sheet edge, do not cut</span></div>
+      <div class="pgrid" style="margin-top:12px">
+        <div class="pcard"><div class="phead"><span class="lbl" id="sheetLbl">Laser sheet</span><span class="row"><button type="button" id="sPrev" aria-label="Previous sheet">◀</button><button type="button" id="sNext" aria-label="Next sheet">▶</button></span></div><div class="psheet" id="sheetView"></div></div>
+        <div class="pcard"><div class="phead"><span class="lbl">Materials</span></div><div style="padding:14px"><ul class="ticks" id="materials"><li>Make the kit to see the list.</li></ul></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="build">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">03 · Instructions</div>
+        <div>
+          <h2>Build sequence</h2>
+          <p>The model is a hollow shell: each layer is a band that the next layer sits on, so it uses a fraction of the board a solid stack would.</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li><div class="n">Laser cutting</div><div>
+          <p>Each sheet has two operations. Run the blue <strong>engrave</strong> lines first as a light score, then the red <strong>cut</strong> lines. Don't move the sheet between them.</p>
+          <p>Board and laser power vary, so run a test square on an offcut before every new batch. Thick board may need two passes; check the cut has gone through before lifting the sheet.</p></div></li>
+        <li><div class="n">Sort the pieces</div><div>
+          <p>Every piece has its ID engraved where the next layer will hide it. Bag them by layer number as they come off the bed.</p>
+          <div class="idkey" aria-label="Example ID 14B2.1"><b>14</b><b>B2</b><b>.1</b></div>
+          <p class="small">Layer 14 · tile B2 (row B from the south, column 2 from the west) · first of several pieces in that tile. Very small pieces may not have room for an ID: find them in the assembly guide.</p></div></li>
+        <li><div class="n">Baseboard</div><div>
+          <p>Cut the baseboard (size above) and lay out the layer 01 pieces dry. Once the outline is square to the board, glue them down.</p></div></li>
+        <li><div class="n">Stack the layers</div><div>
+          <p>Work upward one layer at a time. Each piece's outer edge sits on the blue engraved line of the layer below. Use the <a href="#assemble">3D assembly guide</a> to find every piece for the layer you're on.</p>
+          <ul>
+            <li>Thin PVA on the 15 mm overlap strip only; too much glue warps board.</li>
+            <li>Pin or weight each layer and let it set before you add the next.</li>
+            <li>Dry-fit a full layer before gluing any of it.</li>
+          </ul></div></li>
+        <li><div class="n">Finish</div><div><p>Sand the outer edge flush where tiles meet. Then the site is ready for your proposals.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="assemble">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">04 · Assembly</div>
+        <div>
+          <h2>Find every piece</h2>
+          <p>Step through the layers. The current layer is shown in red with its pieces listed by sheet. Hover or tap a piece to read its ID.</p>
+        </div>
+      </div>
+      <div class="builder">
+        <div class="stage" id="stage">
+          <canvas id="c" aria-label="Interactive 3D assembly model"></canvas>
+          <div class="views" role="group" aria-label="Camera">
+            <button type="button" data-view="aerial" aria-pressed="true">Aerial</button>
+            <button type="button" data-view="plan" aria-pressed="false">Plan</button>
+            <button type="button" data-view="low" aria-pressed="false">Eye level</button>
+          </div>
+          <div class="tip" id="tip" hidden></div>
+          <div class="hint" id="stageHint">Make the kit to see the assembly</div>
+        </div>
+        <div class="panel">
+          <div><div class="lbl">Layer</div><div class="big" id="layNum">—<small id="layM"></small></div></div>
+          <div class="stepper">
+            <button type="button" id="prev" aria-label="Previous layer">◀</button>
+            <input type="range" id="lay" min="1" max="1" value="1" aria-label="Layer">
+            <button type="button" id="next" aria-label="Next layer">▶</button>
+          </div>
+          <div class="row"><button type="button" id="play">Play build</button><button type="button" id="all">Show finished</button></div>
+          <div><div class="lbl" id="pcount">Pieces</div><ul class="plist" id="plist"></ul></div>
+          <p class="small">Stack height at this layer: <strong id="ht">—</strong></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="model.html" data-sitelink>Your model →</a></div>
+</footer>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script src="js/sitekit.js"></script>
+<script src="js/site.js"></script>
+<script src="js/model-core.js"></script>
+<script src="js/kit.js"></script>
+</body>
+</html>

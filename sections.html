@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sections</title>
+<meta name="description" content="Cut sections through the 3D scan of the site in any direction, with the surveyed ground drawn solid. ATU Sligo, Site Model Kit.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/model.css">
+<link rel="stylesheet" href="css/project.css">
+<link rel="stylesheet" href="css/sections.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/three.module.min.js",
+  "three/addons/": "./vendor/three/addons/",
+  "@sparkjsdev/spark": "./vendor/spark/spark.module.min.js"
+} }
+</script>
+</head>
+<body>
+<header class="top" id="top"></header>
+
+<main id="main">
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">Sections</div>
+      <h1>Cut the <em>scan</em>.</h1>
+      <p class="lede">Draw a line across the plan and the 3D scan of the site is cut along it, in any direction. The scan shows trees, walls and ruins; the ground in the cut comes from the survey and is drawn solid, the way a section is drawn.</p>
+      <p class="onpage"><a href="#cut">Cut</a> · <a href="#drawing">Section drawing</a> · <a href="#how">How it works</a></p>
+    </div>
+    <dl class="spec">
+      <div><dt>Scan</dt><dd id="specScan">—</dd></div>
+      <div><dt>Section line</dt><dd id="specLen">—</dd></div>
+      <div><dt>Looking</dt><dd id="specLook">—</dd></div>
+      <div><dt>Ground at the cut</dt><dd id="specLev">—</dd></div>
+      <div><dt>Drawing</dt><dd id="specScale">1:200</dd></div>
+      <div><dt>Ground</dt><dd>survey, bare earth</dd></div>
+    </dl>
+  </div>
+
+  <section id="cut">
+    <div class="wrap">
+      <div class="sx-grid">
+        <div class="sx-left">
+          <div class="sx-view" id="view">
+            <canvas id="gl" aria-label="3D scan of the site, cut along the section line"></canvas>
+            <div class="sx-load" id="load"><span id="loadTxt">Loading the scan…</span><i><b id="loadBar"></b></i></div>
+            <div class="sx-tools">
+              <button type="button" class="on" data-cam="section">Section</button>
+              <button type="button" data-cam="orbit">3D</button>
+              <button type="button" data-cam="plan">Plan</button>
+            </div>
+          </div>
+          <div class="pj-bar">
+            <button type="button" id="flip">Look the other way</button>
+            <button type="button" id="dlView">Download this view (PNG)</button>
+            <span class="pj-link" id="hint">Drag to orbit · scroll to zoom · right-drag to pan</span>
+          </div>
+        </div>
+
+        <div class="sx-panel">
+          <div class="pj-group">
+            <h3>Section line</h3>
+            <div class="sx-plan"><canvas id="plan" aria-label="Plan: drag the ends of the section line"></canvas></div>
+            <p class="small">Drag the two ends of the line, or drag the line itself to move it. The arrows show which way you are looking. Hold <kbd>Shift</kbd> to keep the line to 15° steps.</p>
+          </div>
+
+          <div class="pj-group">
+            <h3>Cut</h3>
+            <div class="cfield"><label class="lbl" for="depth">Show behind the cut · <span id="oDepth">everything</span></label><input type="range" id="depth" min="2" max="201" value="201"></div>
+            <div class="cfield"><label class="lbl" for="above">Hide above · <span id="oAbove">nothing hidden</span></label><input type="range" id="above" min="0" max="1000" value="1000"></div>
+            <label class="pj-l"><input type="checkbox" id="cPoche" checked> Ground in the cut, drawn solid</label>
+            <label class="pj-l"><input type="checkbox" id="cGround"> Survey ground surface (bare earth)</label>
+            <label class="pj-l"><input type="checkbox" id="cScan" checked> Scan</label>
+            <label class="pj-l"><input type="checkbox" id="cCut" checked> Cut the scan</label>
+          </div>
+
+          <details class="pj-group sx-align" id="alignBox">
+            <summary><h3>Scan position</h3></summary>
+            <p class="small" id="alignNote">—</p>
+            <div class="cfield"><label class="lbl" for="aYaw">Turn · <span id="oYaw">0°</span></label><input type="range" id="aYaw" min="-180" max="180" step="0.25" value="0"></div>
+            <div class="mrow">
+              <div class="cfield"><label class="lbl" for="aX">East · <span id="oX">0 m</span></label><input type="range" id="aX" min="0" max="400" step="0.25" value="0"></div>
+              <div class="cfield"><label class="lbl" for="aY">North · <span id="oY">0 m</span></label><input type="range" id="aY" min="0" max="400" step="0.25" value="0"></div>
+            </div>
+            <div class="cfield"><label class="lbl" for="aZ">Up · <span id="oZ">0 m</span></label><input type="range" id="aZ" min="-100" max="100" step="0.05" value="0"></div>
+            <div class="pj-bar"><button type="button" id="aAuto">Find it on the survey</button><button type="button" id="aReset">Reset</button></div>
+            <label class="pj-l sx-file">Use another scan <input type="file" id="aFile" accept=".spz,.ply,.glb,.splat,.ksplat,.sog,.zip"></label>
+            <p class="small">Scans can be <b>.spz</b>, <b>.ply</b>, <b>.sog</b> or a Cesium/LCC <b>.glb</b> with Gaussian splats. A scan you load stays on this computer until you close the page; its position is remembered.</p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="drawing">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Section drawing</div>
+        <div><h2>The ground along the line</h2><p id="drawNote">The surveyed ground along your section line, drawn to scale with levels, ready to print and draw over.</p></div>
+      </div>
+      <div class="sx-draw" id="draw"></div>
+      <div class="pj-bar sx-dl">
+        <select id="dScale" aria-label="Drawing scale"><option value="100">1:100</option><option value="200" selected>1:200</option><option value="500">1:500</option></select>
+        <button type="button" class="primary" id="dlPdf">Download section (PDF)</button>
+        <button type="button" id="dlSvg">Download section (SVG)</button>
+        <span class="pj-link" id="paper">—</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">How it works</div>
+        <div><h2>Scan and survey together</h2><p>Two kinds of data, each used for what it does best.</p></div>
+      </div>
+      <ol class="steps">
+        <li><div class="n">Scan</div><div><p>A Gaussian splat is millions of small coloured blobs that together look like the real place: trees, walls, the road, the ruins. It is only a skin, though. Cut it and it is hollow, with soft, ragged edges, and under trees there may be no ground in it at all.</p></div></li>
+        <li><div class="n">Survey</div><div><p>The drone survey on this site is bare earth: the trees are removed and the ground is measured. That is where the solid ground in the cut and the section drawing come from, so the levels are the same as on every other page.</p></div></li>
+        <li><div class="n">Alignment</div><div><p>The scan is fitted to the survey once, by matching the ground the scan can see to the surveyed ground, and the fit is saved with the site. For your own scan, set the turn roughly by eye, then press <b>Find it on the survey</b>.</p></div></li>
+        <li><div class="n">Draw</div><div><p>Use <b>Show behind the cut</b> to see just a slice of the site, and <b>Hide above</b> to take off the tree canopy. Download the view and the section drawing at the same scale to trace over.</p></div></li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="advanced.html" data-sitelink>Advanced →</a></div>
+</footer>
+
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="js/sitekit.js"></script>
+<script src="js/site.js"></script>
+<script type="module" src="js/sections.js"></script>
+<script>
+/* If the 3D viewer can't start, say why instead of sitting on "Loading the scan". */
+(function () {
+  function say(msg) { var t = document.getElementById('loadTxt'), b = document.getElementById('load'); if (t) t.textContent = msg; if (b) b.classList.add('err'); }
+  if (location.protocol === 'file:') { say('This page has to be opened through a web server, not straight from the folder. Use the website\'s GitHub Pages address, or a local server (see the README).'); return; }
+  var s = document.querySelector('script[src="js/sections.js"]');
+  if (s) s.addEventListener('error', function () { say('The 3D viewer could not be loaded. Check the website has its vendor folder, then reload.'); });
+  setTimeout(function () { if (!window.__sxStarted) say('The 3D viewer is taking a long time to start. Reload the page, or try an up-to-date Chrome, Edge, Firefox or Safari.'); }, 45000);
+})();
+</script>
+</body>
+</html>

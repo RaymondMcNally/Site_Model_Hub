@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Add a Site</title>
+<meta name="description" content="Turn a terrain STL into a site for the Site Model Kit: levels, location and features.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/contours.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/kit.css">
+</head>
+<body>
+<header class="top" id="top"></header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">Add or edit a site</div>
+      <h1 id="hTitle">A new site from an <em>STL</em> or <em>lidar tiles</em>.</h1>
+      <p class="lede">Four steps: read the terrain, say where it is, trace what's on it, then save. Everything happens in your browser; nothing is uploaded.</p>
+      <p class="onpage"><a href="#s1">1 · Terrain</a> · <a href="#s2">2 · Details</a> · <a href="#s3">3 · Features</a> · <a href="#s4">4 · Save</a></p>
+    </div>
+    <dl class="spec">
+      <div><dt>Survey extent</dt><dd id="oSize">—</dd></div>
+      <div><dt>Ground relief</dt><dd id="oRelief">—</dd></div>
+      <div><dt>Grid</dt><dd id="oGrid">—</dd></div>
+      <div><dt>Layers at 5 mm, 1:200</dt><dd id="oLayers">—</dd></div>
+    </dl>
+  </div>
+
+  <section id="s1">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">01 · Terrain</div>
+        <div>
+          <h2>Read the ground</h2>
+          <p>Either an <strong>STL</strong> of the ground surface with north up (+Y), or one or more <strong>GeoTIFF</strong> elevation tiles, such as the free <a href="https://opendata-geodata-gov-ie.hub.arcgis.com/apps/geodata-gov-ie::ie-gsi-open-topographic-lidar-data-ireland-itm-download-viewer/explore" target="_blank" rel="noopener">GSI open lidar for Ireland</a> (use the DTM, bare earth). For an STL, say what scale it was exported at. For GeoTIFFs, drag a box round the area you want: heights, location and north come from the tiles.</p>
+        </div>
+      </div>
+      <div class="stepcard" id="stlCard">
+        <label class="drop" id="stlDrop" for="stlFile"><input type="file" id="stlFile" multiple accept=".stl,model/stl,application/sla,.tif,.tiff,image/tiff"><span><b>Drop an STL or GeoTIFF tiles here</b> or click to choose</span><small>One STL, or one or more neighbouring .tif tiles (hold Cmd or Shift to pick several) · large files take a few seconds</small></label>
+        <div id="tifPanel" hidden style="margin-top:14px">
+          <div class="canvas-wrap" style="position:relative;border:1px solid var(--rule);background:var(--paper)"><canvas id="tifMap" aria-label="The tiles as a shaded map: drag a box round your site" style="display:block;width:100%;cursor:crosshair;touch-action:none"></canvas><div class="mode" style="position:absolute;left:10px;top:10px;font:600 .72rem var(--mono);background:var(--ink);color:var(--paper);padding:4px 8px;border-radius:3px">Drag a box round your site</div></div>
+          <div class="form2" style="margin-top:12px">
+            <div class="cfield"><span class="lbl">Area</span><span id="tifBox" style="font:500 .9rem var(--mono)">—</span><span class="hint" id="tifBoxHint">North is up. Grey: no data in the tiles.</span></div>
+            <div class="cfield"><label class="lbl" for="tifStep">Ground sampled every</label><select id="tifStep"><option value="0">Automatic</option><option value="0.5">0.5 m</option><option value="1">1 m</option><option value="2">2 m</option><option value="5">5 m</option></select><span class="hint">Never finer than the tiles themselves</span></div>
+          </div>
+          <div class="row" style="margin-top:8px"><button type="button" id="tifAll">Use all the data</button></div>
+        </div>
+        <div class="form2" id="stlOpts" style="margin-top:14px">
+          <div class="cfield"><label class="lbl" for="fScale">STL scale</label>
+            <select id="fScale"><option value="0.1">1:100, millimetres</option><option value="0.2" selected>1:200, millimetres</option><option value="0.25">1:250, millimetres</option><option value="0.5">1:500, millimetres</option><option value="1">1:1000 mm, or real metres</option><option value="custom">Other…</option></select>
+            <span class="hint">Metres on the ground per unit in the file</span></div>
+          <div class="cfield" id="customWrap" hidden><label class="lbl" for="fUnit">Metres per STL unit</label><input type="number" id="fUnit" step="any" min="0.0001" value="0.2"></div>
+          <div class="cfield"><label class="lbl" for="fZ">Vertical exaggeration in the STL</label><input type="number" id="fZ" step="any" min="0.1" value="1"><span class="hint">QGIS DEMto3D "Z exaggeration". Leave at 1 if unsure, then check a known height.</span></div>
+        </div>
+        <div class="row" style="margin-top:14px"><button type="button" class="primary" id="readBtn" disabled>Read the ground</button></div>
+        <div class="prog" id="prog" hidden><i></i></div>
+        <p class="summary" id="stlMsg" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">02 · Details</div>
+        <div>
+          <h2>Name, place and levels</h2>
+          <p>The location drives the sun calculations, so take it from a map. North and the level datum matter for the drawings.</p>
+        </div>
+      </div>
+      <div class="stepcard" id="detCard" aria-disabled="true">
+        <div class="form2">
+          <div class="cfield"><label class="lbl" for="dName">Site name</label><input type="text" id="dName" maxlength="60" placeholder="e.g. Gleniff Barytes Mill"></div>
+          <div class="cfield"><label class="lbl" for="dPlace">Place</label><input type="text" id="dPlace" maxlength="60" placeholder="e.g. Ballintrillick, Co. Sligo"></div>
+          <div class="cfield"><label class="lbl" for="dYear">Year or project</label><input type="text" id="dYear" maxlength="30"></div>
+          <div class="cfield"><label class="lbl" for="dSurvey">Survey and credit</label><input type="text" id="dSurvey" maxlength="120" placeholder="e.g. ATU drone lidar, Oct 2025"></div>
+          <div class="cfield"><label class="lbl" for="dLL">Latitude, longitude</label><input type="text" id="dLL" placeholder="54.3989, -8.4006"><span class="hint" id="llHint">Decimal degrees, or 54°23′56″N 8°24′02″W. The centre of the survey.</span></div>
+          <div class="cfield"><label class="lbl" for="dTZ">Time zone</label><input type="text" id="dTZ" list="tzList" value="Europe/Dublin"><datalist id="tzList"><option>Europe/Dublin</option><option>Europe/London</option><option>Europe/Lisbon</option><option>Europe/Paris</option><option>Europe/Berlin</option><option>Europe/Madrid</option><option>Europe/Rome</option><option>Europe/Copenhagen</option><option>America/New_York</option><option>UTC</option></datalist><span class="hint">For clock times on the sun page</span></div>
+          <div class="cfield"><label class="lbl" for="dNorth">North (degrees)</label><input type="number" id="dNorth" step="any" value="0"><span class="hint">0 if the STL has north up. Otherwise, true north's angle clockwise from up.</span></div>
+          <div class="cfield"><label class="lbl" for="dOff">Level of the lowest ground (m)</label><input type="number" id="dOff" step="any" value="0"><span class="hint">0 gives relative levels (0 = lowest ground). Enter a real level, e.g. above OD Malin, if you know it.</span></div>
+          <div class="cfield"><label class="lbl" for="dCI">Contour interval</label><select id="dCI"><option value="0">Automatic</option><option value="0.5">0.5 m</option><option value="1">1 m</option><option value="2">2 m</option><option value="5">5 m</option><option value="10">10 m</option></select></div>
+          <div class="cfield"><label class="lbl" for="dEmbed">3D survey link (optional)</label><input type="url" id="dEmbed" placeholder="Cesium ion story or Sketchfab embed URL"></div>
+          <div class="cfield full"><label class="lbl" for="dNotes">Notes for students (optional)</label><textarea id="dNotes" maxlength="600" placeholder="A sentence or two about the site and the project."></textarea></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s3">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">03 · Features</div>
+        <div>
+          <h2>Trace what's on the site</h2>
+          <p>Watercourses, roads, paths, buildings and the site boundary appear on every drawing. Add a note to any feature and it becomes a "find it on the plan" exercise on the contours page. Mark one as the main feature: pages centre on it.</p>
+        </div>
+      </div>
+      <div class="stepcard" id="featCard" aria-disabled="true">
+        <div class="fedit">
+          <div class="canvas-wrap"><canvas id="fPlan" aria-label="Site plan for tracing features"></canvas><div class="mode" id="fMode" hidden>Drawing · click to add points · double-click to finish</div></div>
+          <div class="tools">
+            <div class="row">
+              <select id="fKind" aria-label="Feature type"></select>
+              <button type="button" class="primary" id="fDraw">Draw new</button>
+              <button type="button" id="fFinish" disabled>Finish</button>
+              <button type="button" id="fUndo" disabled>Undo point</button>
+            </div>
+            <ul class="flist" id="fList"></ul>
+            <div id="fProps" hidden>
+              <div class="form2">
+                <div class="cfield"><label class="lbl" for="pName">Name</label><input type="text" id="pName" maxlength="50"></div>
+                <div class="cfield"><label class="lbl" for="pKind">Type</label><select id="pKind"></select></div>
+                <div class="cfield full"><label class="lbl" for="pNote">Note for the contours page</label><textarea id="pNote" maxlength="500" placeholder="What does this feature look like in contours? e.g. Steep valley: lines on both banks nearly touch."></textarea></div>
+              </div>
+              <div class="row" style="margin-top:8px">
+                <label class="check"><span><input type="checkbox" id="pFocus">Main feature</span></label>
+                <button type="button" class="danger" id="pDel">Delete feature</button>
+              </div>
+              <p class="small">Drag a point to move it. Shift-click a point to remove it.</p>
+            </div>
+            <details class="more">
+              <summary>Import from QGIS or CAD</summary>
+              <div class="form2" style="margin-top:10px">
+                <div class="cfield full"><label class="lbl" for="iFile">GeoJSON or DXF file</label><input type="file" id="iFile" accept=".geojson,.json,.dxf"></div>
+                <div class="cfield"><label class="lbl" for="iCoords">Coordinates are</label><select id="iCoords"><option value="auto">Work it out</option><option value="stl">Same units as the STL</option><option value="map">Map metres (e.g. ITM, UTM)</option><option value="lonlat">Longitude / latitude</option></select></div>
+                <div class="cfield"><label class="lbl" for="iKind">Type if not named</label><select id="iKind"></select></div>
+                <div class="cfield"><label class="lbl" for="iE">Easting of the survey's SW corner</label><input type="number" id="iE" step="any" placeholder="map metres only"></div>
+                <div class="cfield"><label class="lbl" for="iN">Northing of the survey's SW corner</label><input type="number" id="iN" step="any" placeholder="map metres only"></div>
+                <div class="cfield"><label class="lbl" for="iDX">Shift east (m)</label><input type="number" id="iDX" step="any" value="0"></div>
+                <div class="cfield"><label class="lbl" for="iDY">Shift north (m)</label><input type="number" id="iDY" step="any" value="0"></div>
+              </div>
+              <div class="row" style="margin-top:10px"><button type="button" id="iGo" disabled>Import</button><span class="small" id="iMsg"></span></div>
+              <p class="small">For a site read from GeoTIFF tiles, map metres and longitude/latitude are placed exactly from the tiles' coordinates (the corner fields fill themselves in). For an STL, longitude/latitude is placed using the latitude and longitude above as the centre of the survey, so it's approximate; use the shift to line it up with the contours.</p>
+            </details>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s4">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">04 · Save</div>
+        <div>
+          <h2>Keep it, then share it</h2>
+          <p>Saving keeps the site in this browser on this computer. Download the site pack to keep a copy, send it to someone, or publish it on the website.</p>
+        </div>
+      </div>
+      <div class="stepcard" id="saveCard" aria-disabled="true">
+        <div class="row">
+          <button type="button" class="primary" id="sSave">Save on this computer</button>
+          <button type="button" id="sDl">Download site pack</button>
+          <a class="btnlink" id="sOpen" href="index.html" hidden>Open the site →</a>
+        </div>
+        <p class="summary" id="saveMsg" hidden></p>
+        <p class="small" style="margin-top:12px">To publish: put the downloaded file in the website's <code>sites/</code> folder and add it to <code>sites/index.json</code>. See <a href="index.html#staff">For staff</a>.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="index.html">All sites →</a></div>
+</footer>
+
+<script src="vendor/geotiff.min.js"></script>
+<script src="js/sitekit.js"></script>
+<script src="js/site.js"></script>
+<script src="js/dem-import.js"></script>
+<script src="js/setup.js"></script>
+</body>
+</html>

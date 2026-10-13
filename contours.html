@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Reading Contours</title>
+<meta name="description" content="An introduction to contours for first-year architecture students, taught on the real terrain of your site. ATU Sligo, Department of Architecture.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/contours.css">
+<link rel="stylesheet" href="css/kit.css">
+</head>
+<body>
+
+<header class="top" id="top"></header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">ATU Sligo · Department of Architecture · First Year Design Studio</div>
+      <h1>Reading the ground in <em>lines</em>.</h1>
+      <p class="lede">A contour is a line joining points of equal height. Every site drawing you make will sit on them. This page teaches you to read them on the ground you're about to build in board: <span data-site="name">the site</span>.</p>
+      <p class="onpage"><a href="#slice">Layers</a> · <a href="#interval">Interval</a> · <a href="#read">Read</a> · <a href="#measure">Measure</a> · <a href="#water">Water</a> · <a href="#build">Build</a> · <a href="#check">Check</a></p>
+    </div>
+    <dl class="spec">
+      <div><dt>Site</dt><dd data-site="name">—</dd></div>
+      <div><dt>Place</dt><dd data-site="place">—</dd></div>
+      <div><dt>Location</dt><dd data-site="ll">—</dd></div>
+      <div><dt>Survey extent</dt><dd data-site="size">—</dd></div>
+      <div><dt>Ground levels</dt><dd data-site="levels">—</dd></div>
+      <div><dt>Contour interval</dt><dd data-site="ci">—</dd></div>
+    </dl>
+  </div>
+
+  <!-- 01 slice -->
+  <section id="slice">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">01 · What a contour is</div>
+        <div>
+          <h2>Build the hill in layers</h2>
+          <p>Your model is a stack of sheets of board, one sheet for every contour. Each sheet is cut along one line: the line where the ground is exactly at that height. That line is a <strong>contour</strong>. Move the slider to stack the sheets. Look down on the stack from above (right) and the edges of the sheets are the contour lines on the plan.</p>
+        </div>
+      </div>
+      <div class="slicer">
+        <div class="stage" id="sliceStage">
+          <canvas id="sliceGL" aria-label="3D view of the site built up from sheets of board, with the real ground shown faintly above"></canvas>
+          <div class="hint">Drag to orbit · scroll to zoom</div>
+        </div>
+        <div class="plan">
+          <canvas id="slicePlan" aria-label="Plan of the stacked sheets seen from above, with the edge of the top sheet drawn in red"></canvas>
+          <div class="ctrl">
+            <label class="lbl" for="lvl">Top sheet</label>
+            <input type="range" id="lvl" min="1" max="41" step="1" value="12">
+            <div class="val"><span id="lvlTxt">—</span><small> m · <span id="lvlSheets">—</span></small></div>
+            <button type="button" id="lvlPlay">Stack the sheets</button>
+          </div>
+        </div>
+      </div>
+      <p class="small" style="margin-top:10px">Left: the sheets stacked in 3D, with the real ground shown faintly above them. Right: the same stack seen from above. The pale sheet is the top one; everything higher still has to be built on it. Its red edge is the contour at that height, the way you'll see it on a site drawing.</p>
+    </div>
+  </section>
+
+  <!-- 02 interval -->
+  <section id="interval">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">02 · Interval, scale, datum</div>
+        <div>
+          <h2>How far apart, how high, measured from where</h2>
+          <p>Three terms you'll find in the title block of every survey.</p>
+        </div>
+      </div>
+      <div class="two">
+        <div class="prose">
+          <p><strong>Contour interval</strong> is the height between neighbouring lines. On this survey it's <span data-site="ci">1 m</span>. On a site plan, every fifth line is usually drawn heavier and labelled: these are <strong>index contours</strong>.</p>
+          <p><strong>Scale</strong> turns height into board. At 1:200, 1 m is 5 mm, so a 1 m contour is one 5 mm layer. Change the scale and the right interval and board thickness change with it.</p>
+          <p><strong>Datum</strong> is the zero that heights are measured from. On Irish maps, levels are given above Ordnance Datum at Malin Head (OD Malin), roughly mean sea level. GPS and drone surveys often measure from a different zero, the WGS 84 ellipsoid, so always state which datum you are using.</p>
+          <p data-site="datum"></p>
+          <p><strong>Spot heights</strong> are single measured levels: floor levels, road crowns, the top of a wall. Use them where contours are too far apart to say enough.</p>
+          <div class="callout" data-site="survey"></div>
+        </div>
+        <div>
+          <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Drawing scale</th><th>1 m of height</th><th>Typical interval</th><th>Board for 1 layer</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1:100</td><td class="num">10 mm</td><td class="num">0.5 m</td><td class="num">5 mm</td></tr>
+              <tr class="here"><td class="num">1:200</td><td class="num">5 mm</td><td class="num">1 m</td><td class="num">5 mm</td></tr>
+              <tr><td class="num">1:500</td><td class="num">2 mm</td><td class="num">1 m</td><td class="num">2 mm</td></tr>
+              <tr><td class="num">1:1250</td><td class="num">0.8 mm</td><td class="num">2–5 m</td><td class="num">—</td></tr>
+            </tbody>
+          </table>
+          </div>
+          <p class="small" style="margin-top:10px">Highlighted: the site model kit. Board thickness = interval × scale. At 1:500 with 1 m contours you'd cut 2 mm card.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 read -->
+  <section id="read">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">03 · Reading the ground</div>
+        <div>
+          <h2>Patterns to recognise</h2>
+          <p>Contours draw a small set of shapes over and over. Learn these six and you can read almost any site.</p>
+        </div>
+      </div>
+      <div class="forms" id="forms">
+        <div class="form">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><ellipse cx="80" cy="55" rx="70" ry="45"/><ellipse cx="80" cy="55" rx="48" ry="30"/><ellipse cx="80" cy="55" rx="24" ry="15"/></g><g font-family="IBM Plex Mono,monospace" font-size="8" fill="currentColor"><text x="12" y="58">10</text><text x="34" y="58">15</text><text x="60" y="58">20</text></g></svg>
+          <strong>Hill</strong><span>Closed rings, rising towards the middle.</span>
+        </div>
+        <div class="form">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 100 L80 72 L152 100"/><path d="M8 72 L80 44 L152 72"/><path d="M8 44 L80 16 L152 44"/></g><path d="M80 6 V106" stroke="var(--water)" stroke-width="2" stroke-dasharray="4 3" fill="none"/><g font-family="IBM Plex Mono,monospace" font-size="8" fill="currentColor"><text x="10" y="94">10</text><text x="10" y="66">15</text><text x="10" y="38">20</text></g></svg>
+          <strong>Valley</strong><span>The V points uphill, upstream. Water runs down its centre.</span>
+        </div>
+        <div class="form">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 10 L80 38 L152 10"/><path d="M8 38 L80 66 L152 38"/><path d="M8 66 L80 94 L152 66"/></g><g font-family="IBM Plex Mono,monospace" font-size="8" fill="currentColor"><text x="10" y="80">10</text><text x="10" y="52">15</text><text x="10" y="24">20</text></g></svg>
+          <strong>Spur or ridge</strong><span>The V points downhill. Water runs away on both sides.</span>
+        </div>
+        <div class="form">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><ellipse cx="38" cy="55" rx="26" ry="20"/><ellipse cx="38" cy="55" rx="12" ry="9"/><ellipse cx="122" cy="55" rx="26" ry="20"/><ellipse cx="122" cy="55" rx="12" ry="9"/><path d="M4 18 C50 40 110 40 156 18"/><path d="M4 92 C50 70 110 70 156 92"/></g><circle cx="80" cy="55" r="3" fill="var(--accent)"/></svg>
+          <strong>Saddle</strong><span>A low point between two highs. The red dot is the pass.</span>
+        </div>
+        <div class="form">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10 10 V100"/><path d="M18 10 V100"/><path d="M26 10 V100"/><path d="M34 10 V100"/><path d="M72 10 V100"/><path d="M110 10 V100"/><path d="M148 10 V100"/></g><g font-family="IBM Plex Mono,monospace" font-size="8" fill="currentColor"><text x="8" y="108">steep</text><text x="96" y="108">gentle</text></g></svg>
+          <strong>Steep and gentle</strong><span>Close lines mean steep ground; wide spacing means gentle.</span>
+        </div>
+        <div class="form">
+          <svg viewBox="0 0 160 110" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 14 C60 18 100 18 152 14"/><path d="M8 26 C60 30 100 30 152 26"/><path d="M8 34 C60 36 100 36 152 34"/><path d="M8 86 C60 84 100 84 152 86"/><path d="M8 94 C60 96 100 96 152 94"/></g><rect x="50" y="46" width="60" height="26" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-dasharray="3 2"/></svg>
+          <strong>Terrace</strong><span>A wide gap between tight bands: a level shelf, natural or made.</span>
+        </div>
+      </div>
+
+      <h3 style="margin-top:34px">Now find them on <span data-site="name">the site</span></h3>
+      <p class="small" style="margin-bottom:12px" id="readIntro">Select a feature to highlight it on the survey.</p>
+      <div class="reader">
+        <div class="canvas-wrap"><canvas id="readPlan" aria-label="Annotated contour plan of the site"></canvas></div>
+        <div class="side">
+          <ul class="feat" id="feat"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 measure -->
+  <section id="measure">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">04 · Measure</div>
+        <div>
+          <h2>Gradient and section</h2>
+          <p>Drag the two ends of the line anywhere on the survey. The page reads the levels, works out the gradient, says what it means for someone walking or wheeling it, and draws the section.</p>
+        </div>
+      </div>
+      <div class="tool">
+        <div class="tool-top">
+          <div class="canvas-wrap"><canvas id="measurePlan" aria-label="Contour plan with a draggable section line"></canvas></div>
+          <div class="readings">
+            <dl class="rd">
+              <div><dt>Length</dt><dd id="mLen">—</dd></div>
+              <div><dt>Height change</dt><dd id="mRise">—</dd></div>
+              <div><dt>Average gradient</dt><dd id="mGrad">—</dd></div>
+              <div><dt>As % / angle</dt><dd id="mPct">—</dd></div>
+              <div><dt>Steepest 5 m</dt><dd id="mMax">—</dd></div>
+              <div><dt>Ends</dt><dd id="mEnds">—</dd></div>
+            </dl>
+            <div class="verdict" id="verdict"><b>—</b><span></span></div>
+            <p class="small">Gradient = height change ÷ horizontal length, written 1:n. Thresholds from TGD M 2022 (Access and Use), which treats 1:50 or flatter as level, 1:20 to 1:50 as gently sloped, and limits ramps to 1:20 over 10 m, 1:15 over 5 m or 1:12 over 2 m between landings.</p>
+            <div class="row">
+              <button type="button" data-preset="we">West to east</button>
+              <button type="button" data-preset="sn">South to north</button>
+              <button type="button" data-preset="lohi">Lowest to highest</button>
+              <button type="button" data-preset="focus" id="presetFocus" hidden>Through the main feature</button>
+            </div>
+          </div>
+        </div>
+        <div class="section-wrap">
+          <div class="section-head">
+            <div class="lbl">Section A–B</div>
+            <div class="row" role="group" aria-label="Vertical scale">
+              <button type="button" data-ex="1" aria-pressed="true">True scale</button>
+              <button type="button" data-ex="2" aria-pressed="false">Vertical ×2</button>
+            </div>
+          </div>
+          <svg id="sectionSvg" viewBox="0 0 900 230" role="img" aria-label="Ground section along the line"></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 water -->
+  <section id="water">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">05 · Water</div>
+        <div>
+          <h2>Water crosses contours at right angles</h2>
+          <p>Rain takes the steepest way down, so it always flows square to the contours, gathers in the valleys and leaves the ridges. The arrows show that on this survey.</p>
+        </div>
+      </div>
+      <div class="two">
+        <div class="figure">
+          <canvas id="waterPlan" aria-label="Plan with arrows showing the direction water flows" style="display:block;width:100%;height:auto"></canvas>
+          <figcaption>Arrows point downhill, longer where it's steeper. Blue lines are watercourses traced on the survey.</figcaption>
+        </div>
+        <div class="prose">
+          <p>Follow the arrows and you can trace where rain gathers: arrows converging point into a valley line, arrows spreading apart run off a ridge or spur. Where they meet a watercourse, the stream is collecting the run-off from that slope.</p>
+          <p>Water shaped most sites long before anyone built on them, and often decided where people built: mills, farms and roads follow the water and the dry ground beside it.</p>
+          <p><strong>For your design:</strong> trace where water arrives at your building. Anything built across a valley line or at the foot of a slope will collect run-off. Plan drainage, entrances and finished floor levels around it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 build -->
+  <section id="build">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">06 · Building on a slope</div>
+        <div>
+          <h2>Cut, fill, or step</h2>
+          <p>Every building on sloping ground changes the contours around it. Your site plan should show both: existing contours as dashed lines, proposed contours as solid lines, with spot heights on new floors and paths.</p>
+        </div>
+      </div>
+      <div class="cutfill">
+        <figure class="figure">
+          <svg viewBox="0 0 300 150" aria-hidden="true">
+            <path d="M0 120 L300 30" fill="none" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="5 4"/>
+            <path d="M150 75 L215 75 L215 55.5 Z" fill="var(--cut)" opacity=".35"/>
+            <path d="M85 94.5 L150 75 L85 75 Z" fill="var(--board)" opacity=".55"/>
+            <path d="M0 120 L85 94.5 L85 75 L215 75 L215 55.5 L300 30" fill="none" stroke="var(--ink)" stroke-width="2"/>
+            <rect x="110" y="45" width="80" height="30" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+            <g font-family="IBM Plex Mono,monospace" font-size="9" fill="var(--ink)"><text x="196" y="50">cut</text><text x="60" y="88">fill</text></g>
+          </svg>
+          <figcaption>Cut and fill: one level platform, balancing the earth dug out against the earth built up.</figcaption>
+        </figure>
+        <figure class="figure">
+          <svg viewBox="0 0 300 150" aria-hidden="true">
+            <path d="M0 120 L300 30" fill="none" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="5 4"/>
+            <path d="M0 120 L70 99 L70 92 L150 92 L150 72 L230 72 L230 51 L300 30" fill="none" stroke="var(--ink)" stroke-width="2"/>
+            <rect x="70" y="62" width="80" height="30" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+            <rect x="150" y="42" width="80" height="30" fill="none" stroke="var(--ink)" stroke-width="1.6"/>
+            <g font-family="IBM Plex Mono,monospace" font-size="9" fill="var(--ink)"><text x="78" y="110">lower level</text><text x="158" y="88">upper level</text></g>
+          </svg>
+          <figcaption>Stepping: the plan splits into levels that follow the ground. Less earth moved, and the change in level becomes part of the design.</figcaption>
+        </figure>
+        <figure class="figure">
+          <svg viewBox="0 0 300 150" aria-hidden="true">
+            <g fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="5 4"><path d="M10 20 C90 30 200 30 290 22"/><path d="M10 55 C90 65 200 65 290 57"/><path d="M10 90 C90 100 200 100 290 92"/><path d="M10 125 C90 135 200 135 290 127"/></g>
+            <g fill="none" stroke="var(--ink)" stroke-width="1.6"><path d="M10 20 C90 30 200 30 290 22"/><path d="M10 55 C60 62 90 40 100 40 L200 40 C210 40 240 64 290 57"/><path d="M10 90 C60 98 90 112 100 112 L200 112 C210 112 240 100 290 92"/><path d="M10 125 C90 135 200 135 290 127"/></g>
+            <rect x="100" y="40" width="100" height="72" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+            <g font-family="IBM Plex Mono,monospace" font-size="8" fill="var(--ink)"><text x="120" y="80">FFL +10.50</text></g>
+          </svg>
+          <figcaption>Drawing convention: dashed existing contours, solid proposed contours bending round the new platform, finished floor level (FFL) labelled.</figcaption>
+        </figure>
+      </div>
+      <div class="callout" style="margin-top:28px">Look for both on your own site: a level shelf between tight bands of contours is often a platform someone cut and filled long ago, for a building, a yard or a road.</div>
+    </div>
+  </section>
+
+  <!-- 07 check -->
+  <section id="check">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">07 · Check yourself</div>
+        <div>
+          <h2>Five questions</h2>
+          <p>Answer before you start cutting. <span class="score" id="score"></span></p>
+        </div>
+      </div>
+      <div class="quiz" id="quiz"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="kit.html" data-sitelink>Site model kit →</a></div>
+</footer>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="js/sitekit.js"></script>
+<script src="js/site.js"></script>
+<script src="js/contours.js"></script>
+</body>
+</html>

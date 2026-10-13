@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Site Model Kit</title>
+<meta name="description" content="Turn any site survey STL into contour drawings, sun and shadow studies and laser-cut site models. ATU Sligo, Department of Architecture.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/contours.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/kit.css">
+<link rel="stylesheet" href="css/splash.css">
+<script>
+/* Splash gate: runs before paint so the home page never flashes first. Plays once per browser session;
+   add ?intro to the address to replay it (?intro=laser or ?intro=sweep to choose). See js/splash.js. */
+(function () {
+  var d = document.documentElement, f = /[?&]intro\b/.test(location.search), seen = false;
+  try { seen = sessionStorage.getItem('sitekit-intro') === '1'; } catch (e) { }
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (f || (!seen && !reduce)) {
+    d.classList.add('intro-pending');
+    setTimeout(function () { if (!window.__introStarted) d.classList.remove('intro-pending'); }, 4000);   // safety net
+  }
+})();
+</script>
+</head>
+<body>
+<header class="top" id="top"></header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">ATU Sligo · Department of Architecture · Site Model Kit</div>
+      <h1>Any site, layer by <em>layer</em>.</h1>
+      <p class="lede">Load a terrain STL and this website turns it into a contour lesson, sun and shadow studies, a laser-cut model kit for the whole site, and a model of each student's own square. Every page works from the site chosen here.</p>
+      <p class="onpage"><a href="#sites">Sites</a> · <a href="#pages">The pages</a> · <a href="#staff">For staff</a></p>
+    </div>
+    <dl class="spec" id="spec">
+      <div><dt>Site</dt><dd id="sName">—</dd></div>
+      <div><dt>Year</dt><dd id="sYear">—</dd></div>
+      <div><dt>Survey extent</dt><dd id="sSize">—</dd></div>
+      <div><dt>Ground levels</dt><dd id="sLevels">—</dd></div>
+      <div><dt>Location</dt><dd id="sLoc">—</dd></div>
+      <div><dt>Features</dt><dd id="sFeat">—</dd></div>
+    </dl>
+  </div>
+
+  <section id="sites">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">01 · Sites</div>
+        <div>
+          <h2>Choose a site</h2>
+          <p>Sites published with the website are available to everyone. Sites you add yourself are kept in this browser on this computer until you download them as a site pack.</p>
+        </div>
+      </div>
+      <div class="sitegrid" id="siteGrid"></div>
+      <div class="row" style="margin-top:14px">
+        <label class="btnlink" for="importPack">Import a site pack (.json)</label>
+        <input type="file" id="importPack" accept=".json,application/json" hidden>
+        <span class="small" id="importMsg"></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="pages">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">02 · The pages</div>
+        <div>
+          <h2>What each page does</h2>
+          <p>These pages redraw themselves for whichever site is chosen above. Use the menu at the top to switch site from any page.</p>
+        </div>
+      </div>
+      <div class="pages" id="pageCards">
+        <a class="pagecard" data-page="contours.html" href="contours.html"><span class="st live">Live</span><strong>Reading contours</strong><span>Build the hill in layers, read landforms, measure gradients and draw sections, see where water runs.</span></a>
+        <a class="pagecard" data-page="sun.html" href="sun.html"><span class="st live">Live</span><strong>Sun &amp; climate</strong><span>Sun path in 3D, ground shadows on any day, hours of sun, aspect, and rainfall and wind charts from station data.</span></a>
+        <a class="pagecard" data-page="kit.html" href="kit.html"><span class="st live">Live</span><strong>Model kit</strong><span>The whole site as a laser-cut contour model at 1:100, 1:200, 1:500 or 1:1000: sheets, assembly guide, contour plan and a 3D build guide.</span></a>
+        <a class="pagecard" data-page="model.html" href="model.html"><span class="st live">Live</span><strong>Your model</strong><span>Each student picks a square of the site and makes a contour plan plus laser sheets, a 3D print or a CNC carving at 1:100 to 1:1000.</span></a>
+        <a class="pagecard" data-page="advanced.html" href="advanced.html"><span class="st live">Advanced</span><strong>Advanced</strong><span>Sections through a 3D scan, projection onto a physical model, and adding a new site. Only when you need them.</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="staff">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">03 · For staff</div>
+        <div>
+          <h2>Adding next year's site</h2>
+          <p>A new site needs a terrain STL and a few details. Students can do the same for their own sites; only staff publish to the website.</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li><div class="n">STL</div><div><p>Export the terrain as an STL with north up (+Y). QGIS's DEMto3D plugin works well: note the scale (for example 1:200) and any vertical exaggeration. A flat base under the terrain is fine; the page ignores it.</p></div></li>
+        <li><div class="n">Set up</div><div><p>Open <a href="setup.html">Add a site</a>, drop in the STL or GeoTIFF lidar tiles, enter the scale, the location and the year, and trace the main features: watercourses, roads, buildings, the site boundary. You can also import them from QGIS as GeoJSON or from CAD as DXF.</p></div></li>
+        <li><div class="n">Check</div><div><p>Save it on this computer and open each page. Check a known spot height and the north point before anyone cuts board.</p></div></li>
+        <li><div class="n">Publish</div><div><p>Download the site pack, put it in the website's <code>sites/</code> folder and add one line for it to <code>sites/index.json</code>. Push to GitHub and every student sees it. Earlier years stay listed.</p>
+          <code class="blk">{ "sites": [
+  { "id": "gleniff-2026", "name": "Gleniff Barytes Mill", "place": "Ballintrillick, Co. Sligo", "year": "2026", "file": "sites/gleniff-2026.json" },
+  { "id": "new-site-2027", "name": "New site", "year": "2027", "file": "sites/new-site-2027.json" }
+] }</code></div></li>
+      </ol>
+      <p class="small" style="margin-top:14px">Prefer the command line? <code>node tools/stl2pack.js site.stl sites/site.json --name "Site" --scale 200 --lat 54.4 --lon -8.4</code> makes the same pack without features.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="setup.html">Add a site →</a></div>
+</footer>
+
+<script src="js/sitekit.js"></script>
+<script src="js/splash.js"></script>
+<script src="js/site.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>

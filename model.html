@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Your Site Model</title>
+<meta name="description" content="Choose your own square of the site and download a 1:100 contour plan, plus laser-cutting sheets, a 3D print, a plaster casting mould or a CNC carving file for a 1:200 model. ATU Sligo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/contours.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/model.css">
+<link rel="stylesheet" href="css/kit.css">
+</head>
+<body>
+
+<header class="top" id="top"></header>
+
+<main id="main" data-out="card">
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">Your working area</div>
+      <h1>Your own piece of <em data-site="name">the site</em>.</h1>
+      <p class="lede">Drag the square over the part of the site you want to work in, then choose how to make it: a <span class="js-ms">1:200</span> contour model cut from board on the laser cutter, a 3D print for the Bambu Lab P1S (the model itself, or a mould for casting it in plaster), or a carving on the CNC router. Either way you also get a <span class="js-ps">1:100</span> contour plan of the same area to draw on.</p>
+      <p class="onpage"><a href="#pick">Choose your square</a> · <a href="#preview">Preview</a> · <a href="#make">Making it</a></p>
+    </div>
+    <dl class="spec">
+      <div><dt>Model scale</dt><dd id="specModel">1:200</dd></div>
+      <div><dt>Plan scale</dt><dd id="specPlan">1:100</dd></div>
+      <div><dt>3D print</dt><dd id="specPrint">230 mm · 46 × 46 m</dd></div>
+      <div><dt>Plan contours</dt><dd id="specCont">every 0.5 m</dd></div>
+      <div><dt>Heights</dt><dd>true scale</dd></div>
+      <div><dt>Files</dt><dd>PDF · SVG · DXF · 3MF · STL</dd></div>
+    </dl>
+  </div>
+
+  <section id="pick">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">01 · Choose your square</div>
+        <div>
+          <h2>Drag the square onto your site</h2>
+          <p>Drag it, click to move it, or use the arrow keys once the plan is selected. North is up. Check your brief's site selection area: your square should sit inside it. Then choose your output: the same square makes every model.</p>
+        </div>
+      </div>
+      <div class="tool">
+        <div class="tool-top">
+          <div class="canvas-wrap"><canvas id="pickPlan" tabindex="0" aria-label="Site plan with your model square. Use the arrow keys to move it."></canvas></div>
+          <div class="readings">
+            <div class="outsel" role="group" aria-labelledby="outLbl">
+              <span class="lbl" id="outLbl">What are you making?</span>
+              <div class="outbtns">
+                <button type="button" id="oCard" aria-pressed="true"><b>Laser cutter</b><small>layers · waffle · relief</small></button>
+                <button type="button" id="oPrint" aria-pressed="false"><b>3D print</b><small>model or plaster mould · Bambu Lab P1S · 3MF</small></button>
+                <button type="button" id="oCnc" aria-pressed="false"><b>CNC carving</b><small>up to 1200 mm · VCarve Pro · STL</small></button>
+              </div>
+            </div>
+            <div class="cfield only-print"><span class="lbl" id="kindLbl">Print as</span>
+              <div class="seg" role="group" aria-labelledby="kindLbl">
+                <button type="button" id="kModel" aria-pressed="true">Model · 230 mm</button>
+                <button type="button" id="kMould" aria-pressed="false">Plaster mould</button>
+              </div>
+            </div>
+            <div class="cfield only-card"><span class="lbl" id="cardKindLbl">Make it as</span>
+              <div class="seg seg3" role="group" aria-labelledby="cardKindLbl">
+                <button type="button" id="kLayers" aria-pressed="true">Contour layers</button>
+                <button type="button" id="kWaffle" aria-pressed="false">Waffle sections</button>
+                <button type="button" id="kRelief" aria-pressed="false">Engraved relief</button>
+              </div>
+            </div>
+            <div class="cfield"><span class="lbl" id="scaleLbl">Model scale</span>
+              <div class="seg seg4" role="group" aria-labelledby="scaleLbl">
+                <button type="button" data-scale="100" aria-pressed="false">1:100</button>
+                <button type="button" data-scale="200" aria-pressed="true">1:200</button>
+                <button type="button" data-scale="500" aria-pressed="false">1:500</button>
+                <button type="button" data-scale="1000" aria-pressed="false">1:1000</button>
+              </div>
+              <small class="small" id="scaleNote">1:100 shows a small site in detail; 1:500 or 1:1000 fits a large site on the same board.</small>
+            </div>
+            <div class="cfield"><label class="lbl" for="mName">Your name (for the title block)</label><input type="text" id="mName" maxlength="40" placeholder="Your name" autocomplete="name"></div>
+            <div class="mrow">
+              <div class="cfield hide-cnc"><label class="lbl" for="mSize">Model size</label>
+                <select id="mSize"><option value="200">200 × 200 mm</option><option value="210" hidden>210 × 210 mm</option><option value="230" hidden>230 × 230 mm</option><option value="250">250 × 250 mm</option><option value="300" selected>300 × 300 mm</option></select></div>
+              <div class="cfield only-card not-relief"><label class="lbl" for="mBoard">Board</label>
+                <select id="mBoard"><option value="2">2 mm (0.4 m layers)</option><option value="3">3 mm (0.6 m layers)</option><option value="5" selected>5 mm (1 m layers)</option></select></div>
+              <div class="cfield only-model"><label class="lbl" for="mBase">Base slab</label>
+                <select id="mBase"><option value="2">2 mm</option><option value="3" selected>3 mm</option><option value="5">5 mm</option></select></div>
+              <div class="cfield only-mould"><label class="lbl" for="mCast" title="Plaster under the lowest ground">Plaster base</label>
+                <select id="mCast"><option value="10" selected>10 mm</option><option value="15">15 mm</option><option value="20">20 mm</option></select></div>
+            </div>
+            <div class="mrow only-cnc">
+              <div class="cfield"><label class="lbl" for="mCncSize">Carving size</label>
+                <select id="mCncSize"><option value="300">300 × 300 mm (60 m)</option><option value="400" selected>400 × 400 mm (80 m)</option><option value="600">600 × 600 mm (120 m)</option><option value="900">900 × 900 mm (180 m)</option><option value="1200">1200 × 1200 mm (240 m)</option></select></div>
+              <div class="cfield"><label class="lbl" for="mStock">Material thickness</label>
+                <select id="mStock"><option value="18">18 mm</option><option value="25">25 mm</option><option value="36">36 mm (2 × 18 MDF)</option><option value="50">50 mm</option><option value="75">75 mm</option><option value="100" selected>100 mm</option><option value="150">150 mm</option></select></div>
+            </div>
+            <div class="mrow only-cnc">
+              <div class="cfield"><label class="lbl" for="mFit">Heights</label>
+                <select id="mFit"><option value="true" selected>True scale (1:200)</option><option value="stock">Fit to the material</option></select></div>
+              <div class="cfield"><label class="lbl" for="mCncBase" title="Material left uncut under the lowest ground">Uncut base</label>
+                <select id="mCncBase"><option value="3">3 mm</option><option value="6" selected>6 mm</option><option value="10">10 mm</option></select></div>
+            </div>
+            <div class="mrow only-print">
+              <div class="cfield"><label class="lbl" for="mVex">Heights</label>
+                <select id="mVex"><option value="1" selected>True scale (1:200)</option><option value="1.5">Exaggerated 1.5×</option><option value="2">Exaggerated 2×</option></select></div>
+              <label class="check only-model"><span><input type="checkbox" id="mArrow" checked>North arrow</span><small>recessed into the underside, so you can orient the print</small></label>
+            </div>
+            <div class="mrow only-card">
+              <div class="cfield not-relief"><label class="lbl" for="mSheet">Laser sheet</label>
+                <select id="mSheet"><option value="841x594">A1 · 841 × 594 mm</option><option value="594x420">A2 · 594 × 420 mm</option><option value="600x400">Bed · 600 × 400 mm</option><option value="900x600">Bed · 900 × 600 mm</option><option value="1000x600">Bed · 1000 × 600 mm</option></select></div>
+              <label class="check only-layers"><span><input type="checkbox" id="mHollow" checked>Hollow layers</span><small>saves board; the cut-out middles are reusable offcuts</small></label>
+              <div class="cfield only-waffle"><label class="lbl" for="mSpacing">Sections every</label>
+                <select id="mSpacing"><option value="15">15 mm (3 m)</option><option value="20" selected>20 mm (4 m)</option><option value="25">25 mm (5 m)</option><option value="30">30 mm (6 m)</option></select></div>
+              <div class="cfield only-relief"><label class="lbl" for="mDpi">Engraving resolution</label>
+                <select id="mDpi"><option value="254" selected>254 dpi (10 px per mm)</option><option value="318">318 dpi (12.5 px per mm)</option><option value="400">400 dpi (15.7 px per mm)</option></select></div>
+            </div>
+            <label class="check"><span><input type="checkbox" id="mTile">Class tile model</span><small id="tileNote">snaps your square to the class grid and uses one site-wide base level, so everyone's tiles join up</small></label>
+            <dl class="rd">
+              <div><dt>Real area</dt><dd id="oArea">—</dd></div>
+              <div><dt>Ground levels</dt><dd id="oLevels">—</dd></div>
+              <div><dt id="tLayers">Layers</dt><dd id="oLayers">—</dd></div>
+              <div><dt id="tSheets">Laser sheets</dt><dd id="oSheets">—</dd></div>
+              <div><dt id="tHeight">Model height</dt><dd id="oHeight">—</dd></div>
+              <div><dt>Plan sheet</dt><dd id="oPaper">—</dd></div>
+            </dl>
+            <p class="mstatus" id="mStatus">Loading the survey…</p>
+            <div class="mbtns">
+              <button type="button" class="primary" id="dlPlan" disabled>Download 1:100 plan (PDF)</button>
+              <button type="button" class="primary only-card only-layers" id="dlKit" disabled>Download cutting kit (ZIP)</button>
+              <button type="button" class="primary only-card only-waffle" id="dlWaffle" disabled>Download waffle kit (ZIP)</button>
+              <button type="button" class="primary only-card only-relief" id="dlRelief" disabled>Download relief image (PNG)</button>
+              <button type="button" class="primary only-print" id="dlPrint" disabled>Download 3D print (3MF)</button>
+              <button type="button" class="only-print" id="dlStl" disabled>Download STL instead</button>
+              <button type="button" class="primary only-cnc" id="dlCnc" disabled>Download CNC model (ZIP)</button>
+            </div>
+            <p class="small only-card only-layers">The kit holds every laser sheet as SVG, DXF and PDF, plus an assembly guide. Red lines cut, blue lines engrave.</p>
+            <p class="small only-card only-waffle">The kit holds every section piece on laser sheets as SVG, DXF and PDF, plus an assembly guide. Red lines cut, blue lines engrave the piece labels.</p>
+            <p class="small only-card only-relief">A greyscale image for the laser's 3D or greyscale engraving mode: black engraves deepest (the lowest ground), white is left untouched. It carries its own resolution, so it imports at the right size.</p>
+            <button type="button" class="only-tile" id="dlTiles">Download class tile map (PDF)</button>
+            <p class="small only-model">Open the 3MF in Bambu Studio: it lands on the plate at the right size, ready to slice. Use the STL only if another slicer asks for one.</p>
+            <p class="small only-cnc">The ZIP holds the model as an STL to import into VCarve Pro, and a setup sheet for the technician. VCarve makes the toolpaths and G-code.</p>
+            <p class="small only-mould">The mould is your square upside down and mirrored, so the plaster cast comes out the right way round. Fill it to the brim: the rim is the pour line.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="preview">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">02 · Preview</div>
+        <div>
+          <h2><span class="only-card">Your model, and how it cuts</span><span class="only-model">Your model, and how it prints</span><span class="only-mould">Your mould, and how it prints</span><span class="only-cnc">Your carving, and the block it comes from</span></h2>
+          <p class="only-card not-relief">The 3D view shows the finished model at true scale on its base. The sheet view shows exactly what goes to the laser cutter.</p>
+          <p class="only-card only-relief">The 3D view suggests the engraved plaque (an engraving is only a few millimetres deep, so its heights are not to scale). The image is exactly what goes to the laser.</p>
+          <p class="only-model">The 3D view shows the print as it will come off the plate. The bed view shows where it sits on the 256 × 256 mm P1S build plate.</p>
+          <p class="only-cnc">The 3D view shows the carving inside the block of material it is cut from. The section shows how deep the cutter goes, and how much material stays uncut under the lowest ground.</p>
+          <p class="only-mould">The 3D view shows the mould as it will come off the plate: your site upside down and mirrored, inside tapered walls. The bed view shows where it sits on the 256 × 256 mm P1S build plate.</p>
+        </div>
+      </div>
+      <div class="pgrid">
+        <div class="pcard">
+          <div class="phead"><span class="lbl" id="p3dLbl">Finished model</span></div>
+          <div class="p3d" id="p3dStage"><canvas id="p3d" aria-label="3D preview of your model"></canvas><div class="hint">Drag to orbit · scroll to zoom</div></div>
+        </div>
+        <div class="pcard">
+          <div class="phead only-card not-relief"><span class="lbl" id="sheetLbl">Laser sheet</span><span class="row"><button type="button" id="sPrev" aria-label="Previous sheet">◀</button><button type="button" id="sNext" aria-label="Next sheet">▶</button></span></div>
+          <div class="psheet only-card not-relief" id="sheetView"></div>
+          <div class="phead only-card only-relief"><span class="lbl" id="reliefLbl">Engraving image</span></div>
+          <div class="psheet prelief only-card only-relief" id="reliefView"></div>
+          <div class="phead only-print"><span class="lbl">Build plate · Bambu Lab P1S · 256 × 256 mm</span></div>
+          <div class="psheet pbed only-print" id="bedView"></div>
+          <div class="phead only-cnc"><span class="lbl">Section through the block · Mantech Falcon router</span></div>
+          <div class="psheet pcnc only-cnc" id="cncView"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="make">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">03 · Making it</div>
+        <div>
+          <h2>From files to model</h2>
+          <p class="only-card only-layers">The same method as the full site model, at a size you can make yourself.</p>
+          <p class="only-card only-waffle">An egg-crate of true sections through your site: every piece is the ground cut through at one line of a grid.</p>
+          <p class="only-card only-relief">A shallow relief engraved into a single sheet: quick, cheap and good to handle, though its heights are not to scale.</p>
+          <p class="only-model">One print, no assembly. Book the printer: a 230 mm site at 0.2 mm layers is an overnight job.</p>
+          <p class="only-mould">Print the mould, then cast as many plaster models as you like from it.</p>
+          <p class="only-cnc">You bring the file and the material; the technician sets up the toolpaths in VCarve Pro and runs the router.</p>
+        </div>
+      </div>
+      <ol class="steps only-card only-layers">
+        <li><div class="n">Base</div><div><p>Cut a stiff base exactly your model size (for example 300 × 300 mm) from 5–6 mm board or MDF. Every layer lines up with its edges.</p></div></li>
+        <li><div class="n">Cut</div><div><p>Run the blue engrave lines first as a light score, then the red cut lines. Test your settings on an offcut. Each piece is engraved with its layer number and level, e.g. <code>07 15</code> (layer 07, level 15 m).</p></div></li>
+        <li><div class="n">Stack</div><div><p>Glue layer 01 to the base, square to the edges. Each next layer sits on the blue line engraved on the one below. With hollow layers, glue only on the strip the next layer covers.</p></div></li>
+        <li><div class="n">Draw</div><div><p>Print the <span class="js-ps">1:100</span> plan at 100% on the sheet size it names. Use it as the base for your site analysis overlays and your Stage 2 design.</p></div></li>
+      </ol>
+      <ol class="steps only-model">
+        <li><div class="n">Open</div><div><p>Open the <code>.3mf</code> in Bambu Studio and choose the Bambu Lab P1S with a 0.4 mm nozzle. The model is already 230 × 230 mm and placed clear of the plate's front-left corner, which the P1S can't print on. Don't scale it, or it is no longer <span class="js-ms">1:200</span>. If you move it, press Arrange (A) to put it back in a safe spot.</p></div></li>
+        <li><div class="n">Settings</div><div><p>PLA in a light matt colour shows the contours best. Layer height 0.2 mm (0.12 mm for finer terraces), 2 walls, 10–15% gyroid infill, no supports. Brim is optional; the flat base sticks well on a textured PEI plate.</p></div></li>
+        <li><div class="n">Print</div><div><p>Slice and check the time and filament before you send it. Steep squares take longer: the readout above gives the tallest point. Let the plate cool before you lift the print off.</p></div></li>
+        <li><div class="n">Draw</div><div><p>The north arrow is recessed into the underside. Print the <span class="js-ps">1:100</span> plan at 100% on the sheet size it names and use it as the base for your site analysis overlays and your Stage 2 design.</p></div></li>
+      </ol>
+      <ol class="steps only-card only-waffle">
+        <li><div class="n">Cut</div><div><p>Run the blue engrave lines first, then the red cut lines; test on an offcut. Every piece is engraved with its name and an arrow: <code>A</code> pieces run west to east (arrow points east, A1 is the most southerly), <code>B</code> pieces run south to north (arrow points north, B1 is the most westerly).</p></div></li>
+        <li><div class="n">Stand</div><div><p>Cut a base board exactly your model size. Stand the B pieces upright on it, slots facing up, B1 on the west edge and every arrow pointing north.</p></div></li>
+        <li><div class="n">Slot</div><div><p>Lower each A piece onto them, slots facing down, A1 at the south edge and arrows pointing east. Every slot is half the height at its crossing, so the tops meet flush. Ease the pieces in; if a slot is tight, sand it rather than force it.</p></div></li>
+        <li><div class="n">Read</div><div><p>Each piece is a true site section at <span class="js-ms">1:200</span>, spaced as the page says. Use them to draw your Stage 2 sections, and print the plan at 100% as the base for your overlays.</p></div></li>
+      </ol>
+      <ol class="steps only-card only-relief">
+        <li><div class="n">Import</div><div><p>Open the PNG in the laser software. It carries its resolution, so it should come in at your model size (for example 300 × 300 mm); check the size before you run it. North is the top of the image.</p></div></li>
+        <li><div class="n">Settings</div><div><p>Use the software's 3D or greyscale engraving mode (in LightBurn: Image mode 3D Slice or Grayscale), where black engraves deepest. Depth comes from power, speed and passes: test on an offcut of the same material first.</p></div></li>
+        <li><div class="n">Material</div><div><p>Birch plywood and MDF show the relief best; cast acrylic gives a frosted relief. Keep the extraction running: deep engraving makes a lot of smoke.</p></div></li>
+        <li><div class="n">Read</div><div><p>The relief is a few millimetres deep, so it shows the shape of the ground, not true heights. Pair it with the <span class="js-ps">1:100</span> plan, printed at 100%, for levels.</p></div></li>
+      </ol>
+      <ol class="steps only-cnc">
+        <li><div class="n">Material</div><div><p>Prepare a block a little bigger than your carving (the setup sheet gives a size) and at least as thick as the model is tall. For true-scale heights that usually means laminated MDF or a block of high-density modelling foam. Make sure it is flat and square.</p></div></li>
+        <li><div class="n">VCarve</div><div><p>Give the technician the ZIP. In VCarve Pro the STL is imported as a 3D model at its own size (it is already <span class="js-ms">1:200</span> in millimetres), with its top at the material surface. The setup sheet lists every setting.</p></div></li>
+        <li><div class="n">Toolpaths</div><div><p>A 3D roughing pass clears the bulk, then a 3D finishing pass with a ball-nose bit gives the ground its surface. Toolpaths are saved with the post processor supplied with the router and loaded from its USB stick.</p></div></li>
+        <li><div class="n">Draw</div><div><p>North is the back edge of the file (the top of the plan). Mark it on the carving before you lift it off the bed. Print the plan at 100% on the sheet size it names and use it as the base for your site analysis overlays and your Stage 2 design.</p></div></li>
+      </ol>
+      <ol class="steps only-mould">
+        <li><div class="n">Print</div><div><p>Open the <code>.3mf</code> in Bambu Studio (Bambu Lab P1S, 0.4 mm nozzle). It is placed clear of the plate's front-left no-print corner; don't scale it. PLA, 3 walls, 15% infill, no supports. Use 0.12 mm layers if you can wait: every layer line shows in the plaster.</p></div></li>
+        <li><div class="n">Prepare</div><div><p>Coat the inside with a release agent (a thin film of petroleum jelly or soft soap, or mould release spray), working it into the hollows with a soft brush. Stand the mould on a level board and mark north on its back wall: the side furthest from you as it sat on the plate.</p></div></li>
+        <li><div class="n">Pour</div><div><p>Mix fine casting plaster by the bag's instructions; the page gives the volume to fill. Pour slowly into the deepest part, tap the sides to lift bubbles, and fill to the brim. Scrape a ruler across the rim: that flat face becomes the base of your model.</p></div></li>
+        <li><div class="n">Release</div><div><p>Leave it until the plaster has set and cooled, then turn the mould over onto a cloth and ease the cast out: the walls are tapered so it lets go. Let the cast dry for a few days before you paint or draw on it. If a PLA mould warps from the plaster's heat, print the next one in PETG.</p></div></li>
+      </ol>
+      <div class="callout" style="margin-top:18px">Levels come from the site's terrain model, which is usually bare earth: trees and buildings aren't in it. Traced features are approximate. Parts of a square that fall outside the survey are left at base level. The 3D print and mould follow the terrain grid every 0.4 m (2 mm on the print), so the ground is a fine faceted surface rather than stepped layers. CNC carvings over 600 mm use every second point (4 mm on the carving).</div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>ATU Sligo · Department of Architecture · Site Model Kit</span><span class="credit">Created by R McNally</span><a href="index.html">All sites →</a></div>
+</footer>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/OrbitControls.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script src="js/sitekit.js"></script>
+<script src="js/site.js"></script>
+<script src="js/model-core.js"></script>
+<script src="js/model.js"></script>
+</body>
+</html>
