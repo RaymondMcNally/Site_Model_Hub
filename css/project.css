@@ -13,6 +13,7 @@
 .pj-l { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .92rem }
 .pj-l input[type=checkbox] { accent-color: var(--accent) }
 .pj-l select { margin-left: auto }
+.pj-sub { padding-left: 22px; font-size: .86rem }
 .pj-l output { margin-left: auto; font: .74rem var(--mono); color: var(--muted) }
 .pj-l input[type=file] { font: .72rem var(--mono); max-width: 100%; margin-left: auto }
 .pj-key { margin-left: auto; font: .7rem var(--mono); color: var(--muted); display: inline-flex; gap: 6px; align-items: center }

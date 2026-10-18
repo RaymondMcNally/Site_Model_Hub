@@ -25,7 +25,7 @@
   const today = (() => { const d = new Date(); return d.toISOString().slice(0, 10); })();
   const S = {
     area: 'site', base: 3, vex: 1, aspect: 1.6, scale: 200,   // scale: the physical model's scale, 1:scale
-    layers: { elev: true, hill: true, cont: true, slope: false, feat: true, flood: false, sun: false, img: false, cal: false, gis: true },
+    layers: { elev: true, hill: true, cont: true, slope: false, feat: true, flood: false, sun: false, img: false, cal: false, gis: true, sect: true, sectDim: true },
     ci: 1, flood: 0.2, date: today, time: 0.5, imgOp: 0.85,
     calib: {},                                  // per model: { corners: [[u,v]×4 SW,SE,NE,NW], h, nx, ny }
     gis: [],                                    // GIS layer styles, top of the list drawn last (geometry is in IndexedDB)
@@ -251,6 +251,48 @@
   }
   const ensureAnim = () => { if (!animF && gisAnimating()) animF = requestAnimationFrame(animTick); };
 
+  // ---------------------------------------------------------------- the section cut from the Sections page
+  // Sections (and its big-screen window) send the cut on the channel 'sitekit-link-<site>'; the last one is also in
+  // localStorage, so the line is there even if Sections is opened later or closed.
+  const LINK = 'BroadcastChannel' in window ? new BroadcastChannel('sitekit-link-' + pack.id) : null;
+  let CUT = null;
+  const takeCut = s => { CUT = s && s.A && s.B ? { A: s.A, B: s.B, look: s.look || 1, depth: +s.depth || 201 } : CUT; };
+  try { takeCut(JSON.parse(localStorage.getItem('sitekit-sections-' + pack.id) || 'null')); } catch (e) { }
+  if (LINK) {
+    LINK.onmessage = ({ data: m }) => { if (m.t === 'cut' && m.s) { takeCut(m.s); if (A) compose(true); if (!OUT) showCut(); } };
+    try { LINK.postMessage({ t: 'cut-request' }); } catch (e) { }
+  }
+  function drawCut(c) {
+    if (!S.layers.sect || !CUT) return;
+    const [ax, ay] = CUT.A, [bx, by] = CUT.B, L = Math.hypot(bx - ax, by - ay); if (L < 1) return;
+    const u = [(bx - ax) / L, (by - ay) / L], v = [-u[1] * CUT.look, u[0] * CUT.look];           // v: the way the section looks
+    const X = m => TX(m * 5), Y = m => TY(m * 5), BIG = 3 * Math.max(A.w, A.h) / 5;
+    const px = Math.max(tex.width, tex.height) / 400;                  // sizes relative to the model, so they read at any scale
+    const at = (t, o) => [ax + u[0] * t + v[0] * o, ay + u[1] * t + v[1] * o];
+    const path = pts => { c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(X(x), Y(y)) : c.moveTo(X(x), Y(y))); };
+    c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+    if (S.layers.sectDim) {                                          // what the cut takes away, and beyond "show behind the cut"
+      c.fillStyle = 'rgba(0,0,0,.62)';
+      path([at(-BIG, 0), at(BIG, 0), at(BIG, -BIG), at(-BIG, -BIG)]); c.fill();
+      if (CUT.depth <= 200) { c.fillStyle = 'rgba(0,0,0,.45)'; path([at(-BIG, CUT.depth), at(BIG, CUT.depth), at(BIG, BIG), at(-BIG, BIG)]); c.fill(); }
+    }
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = Math.max(1, 0.7 * px); c.setLineDash([6 * px, 4 * px]);
+    path([at(-BIG, 0), at(BIG, 0)]); c.stroke(); c.setLineDash([]);                       // the plane, right across the model
+    c.strokeStyle = '#000'; c.lineWidth = 5 * px; path([CUT.A, CUT.B]); c.stroke();
+    c.strokeStyle = '#ff3b30'; c.lineWidth = 3 * px; path([CUT.A, CUT.B]); c.stroke();
+    const dx = v[0], dy = -v[1], len = 22 * px, hw = 7 * px;                             // arrows: the way you look
+    [[ax, ay, 'A', -1], [bx, by, 'B', 1]].forEach(([x, y, t, sgn]) => {
+      const qx = X(x), qy = Y(y);
+      c.strokeStyle = '#ff3b30'; c.lineWidth = 2.5 * px; c.beginPath(); c.moveTo(qx, qy); c.lineTo(qx + dx * len, qy + dy * len); c.stroke();
+      c.fillStyle = '#ff3b30'; c.beginPath(); c.moveTo(qx + dx * (len + 10 * px), qy + dy * (len + 10 * px)); c.lineTo(qx + dx * len - dy * hw, qy + dy * len + dx * hw); c.lineTo(qx + dx * len + dy * hw, qy + dy * len - dx * hw); c.closePath(); c.fill();
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(qx, qy, 3.5 * px, 0, Math.PI * 2); c.fill(); c.lineWidth = 1.5 * px; c.stroke();
+      c.font = `800 ${Math.round(11 * px)}px Archivo, system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+      const lx = qx + u[0] * sgn * 11 * px, ly = qy - u[1] * sgn * 11 * px;
+      c.lineWidth = 3 * px; c.strokeStyle = '#000'; c.strokeText(t, lx, ly); c.fillStyle = '#fff'; c.fillText(t, lx, ly);
+    });
+    c.restore();
+  }
+
   let vecDirty = true;
   function compose(lite) {                                           // lite: GIS only changed, keep the terrain raster
     if (vecDirty) { drawVector(); vecDirty = false; }
@@ -262,6 +304,7 @@
     if (S.layers.img && IMG) { tctx.globalAlpha = S.imgOp; tctx.drawImage(IMG, 0, 0, tex.width, tex.height); tctx.globalAlpha = 1; }
     if (S.layers.gis && S.gis.length) tctx.drawImage(gis, 0, 0);
     tctx.drawImage(vec, 0, 0);
+    drawCut(tctx);
     views.forEach(v => v.texUpdate());
     ensureAnim();
   }
@@ -431,7 +474,14 @@
   const bindCheck = (id, k, kind) => { $(id).checked = !!L[k]; $(id).onchange = e => { L[k] = e.target.checked; changed(kind); }; };
   bindCheck('lElev', 'elev', 'ras'); bindCheck('lHill', 'hill', 'ras'); bindCheck('lCont', 'cont', 'vec'); bindCheck('lSlope', 'slope', 'ras');
   bindCheck('lFeat', 'feat', 'vec'); bindCheck('lFlood', 'flood', 'ras'); bindCheck('lSun', 'sun', 'ras'); bindCheck('lImg', 'img', 'ras'); bindCheck('lCal', 'cal', 'vec');
-  bindCheck('lGis', 'gis', 'gis');
+  bindCheck('lGis', 'gis', 'gis'); bindCheck('lSect', 'sect', 'gis'); bindCheck('lSectDim', 'sectDim', 'gis');
+  function showCut() {
+    const el = $('oSect'); if (!el) return;
+    if (!CUT) { el.textContent = 'none yet'; return; }
+    const L = Math.hypot(CUT.B[0] - CUT.A[0], CUT.B[1] - CUT.A[1]), v = [-(CUT.B[1] - CUT.A[1]) / (L || 1) * CUT.look, (CUT.B[0] - CUT.A[0]) / (L || 1) * CUT.look];
+    const a = (Math.atan2(v[0], v[1]) * 180 / Math.PI + 360) % 360;
+    el.textContent = `${L.toFixed(0)} m, looking ${compass(a)}`;
+  }
   $('pArea').value = S.area; $('pArea').onchange = e => { S.area = e.target.value; changed('area'); };
   $('pBase').value = S.base; $('pBase').onchange = e => { S.base = +e.target.value; changed('geo'); };
   $('pVex').value = S.vex; $('pVex').onchange = e => { S.vex = +e.target.value; changed('geo'); };
@@ -473,7 +523,7 @@
   }
   function syncUI() {
     if (OUT) return;
-    Object.entries({ lElev: 'elev', lHill: 'hill', lCont: 'cont', lSlope: 'slope', lFeat: 'feat', lFlood: 'flood', lSun: 'sun', lImg: 'img', lCal: 'cal', lGis: 'gis' }).forEach(([id, k]) => $(id).checked = !!L[k]);
+    Object.entries({ lElev: 'elev', lHill: 'hill', lCont: 'cont', lSlope: 'slope', lFeat: 'feat', lFlood: 'flood', lSun: 'sun', lImg: 'img', lCal: 'cal', lGis: 'gis', lSect: 'sect', lSectDim: 'sectDim' }).forEach(([id, k]) => $(id).checked = !!L[k]);
     $('oFlood').textContent = L.flood ? `${G.fmt(A.lo + S.flood * (A.hi - A.lo))} m` : '—';
     if (L.sun) { const s = sunNow(); $('oSun').textContent = s.alt > 0 ? `${hhmm(s.hrs)} · ${s.alt.toFixed(0)}° from the ${compass(s.az)}` : `${hhmm(s.hrs)} · below the horizon`; } else $('oSun').textContent = '—';
     $('specOut').textContent = { 1.6: '1920 × 1200', 1.7778: '1920 × 1080', 1.3333: '1024 × 768' }[S.aspect] || `${S.aspect.toFixed(2)} : 1`;
@@ -588,6 +638,6 @@
   if (!GL) $('gisGroup').hidden = true;
 
   setAspect(); rebuild(); syncUI(); link(false);
-  showPlace(); loadMissing(); renderGis();
+  showPlace(); loadMissing(); renderGis(); showCut();
   send({ t: 'state', s: S }); send({ t: 'ping' });
 })();

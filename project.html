@@ -85,6 +85,9 @@ if (/[?&]out\b/.test(location.search)) document.documentElement.classList.add('p
               <div class="cfield"><label class="lbl">&nbsp;</label><button type="button" id="pPlay">Play the day</button></div>
             </div>
             <input type="range" id="pTime" min="0" max="1000" value="500" aria-label="Time of day">
+            <label class="pj-l"><input type="checkbox" id="lSect" checked> Section cut <output id="oSect">—</output></label>
+            <label class="pj-l pj-sub"><input type="checkbox" id="lSectDim" checked> Darken what the cut takes away</label>
+            <p class="small">The cut comes from the <a href="sections.html" target="_blank" rel="noopener">Sections</a> page, live while it is open; its big-screen window shows the section itself.</p>
             <label class="pj-l"><input type="checkbox" id="lImg"> Your image <input type="file" id="pImg" accept="image/*" aria-label="Choose an image"></label>
             <input type="range" id="pImgOp" min="10" max="100" value="85" aria-label="Image strength">
             <p class="small">Images are stretched to the model's outline, north up: crop a plan or aerial photo to the same square before you load it.</p>

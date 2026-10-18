@@ -20,6 +20,10 @@
   "@sparkjsdev/spark": "./vendor/spark/spark.module.min.js"
 } }
 </script>
+<script>
+/* sections.html?display is the big-screen window: the 3D view only, full screen with F. */
+if (/[?&]display\b/.test(location.search)) document.documentElement.classList.add('sx-display');
+</script>
 </head>
 <body>
 <header class="top" id="top"></header>
@@ -49,6 +53,10 @@
           <div class="sx-view" id="view">
             <canvas id="gl" aria-label="3D scan of the site, cut along the section line"></canvas>
             <div class="sx-load" id="load"><span id="loadTxt">Loading the scan…</span><i><b id="loadBar"></b></i></div>
+            <div class="sx-paused" id="sxPaused" hidden><p>Showing on the big screen</p><button type="button" id="sxShowHere">Show it here too</button></div>
+            <div class="sx-cap" id="sxCap"></div>
+            <p class="sx-note" id="sxNote" hidden>The controls window is using a scan loaded from that computer; this screen shows the site's own scan.</p>
+            <p class="sx-hint" id="sxHint">Big screen · click, then press F for full screen · R reframes the view</p>
             <div class="sx-tools">
               <button type="button" class="on" data-cam="section">Section</button>
               <button type="button" data-cam="orbit">3D</button>
@@ -67,6 +75,13 @@
             <h3>Section line</h3>
             <div class="sx-plan"><canvas id="plan" aria-label="Plan: drag the ends of the section line"></canvas></div>
             <p class="small">Drag the two ends of the line, or drag the line itself to move it. The arrows show which way you are looking. Hold <kbd>Shift</kbd> to keep the line to 15° steps.</p>
+          </div>
+
+          <div class="pj-group">
+            <h3>Big screen and projector</h3>
+            <div class="pj-bar"><button type="button" class="primary" id="openBig">Open big-screen window</button><span class="pj-link" id="bigLink">No big screen yet</span></div>
+            <p class="small">Drag the window onto the large monitor, click it and press <kbd>F</kbd>. It follows every move of the line here. With the <a href="project.html" target="_blank" rel="noopener">Projection</a> page open, its <b>Section cut</b> layer draws the same line on the model and darkens what the cut takes away.</p>
+            <label class="pj-l"><input type="checkbox" id="keepHere"> Keep the 3D view on this screen too <span class="pj-key">uses more graphics</span></label>
           </div>
 
           <div class="pj-group">

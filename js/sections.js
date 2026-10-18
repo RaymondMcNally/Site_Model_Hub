@@ -1,6 +1,9 @@
 /* Sections: cut the site's Gaussian-splat scan along any vertical plane, with the surveyed ground drawn solid in the cut.
    World (three.js, metres): X = east, Y = level (same levels as every other page), Z = south. Survey plan: x east, y north, metres from the south-west corner.
-   The scan's own frame is z-up; the site pack stores how it sits on the survey: { yaw (deg), x, y (m), z (m added to scan heights), scale }. */
+   The scan's own frame is z-up; the site pack stores how it sits on the survey: { yaw (deg), x, y (m), z (m added to scan heights), scale }.
+   Big screen and projector: sections.html?display is a full-screen view for a large monitor that follows this page's cut,
+   and the projection page draws the same cut on the physical model. They share it through the BroadcastChannel
+   'sitekit-link-<site>' (same browser, same computer): { t: 'cut', s: { A, B, look, depth, … }, cam, final, T }. */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SparkRenderer, SplatMesh, SplatEdit, SplatEditSdf, SplatEditSdfType, SplatEditRgbaBlendMode } from '@sparkjsdev/spark';
@@ -17,9 +20,25 @@ function main(G) {
   const compass = a => ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'][Math.round(((a % 360) + 360) % 360 / 45) % 8];
 
   // ------------------------------------------------------------------ state
-  const S = { A: null, B: null, look: 1, depth: 201, above: 1000, poche: true, ground: false, scan: true, cut: true, cam: 'section', scale: 200, own: {} };
+  const S = { A: null, B: null, look: 1, depth: 201, above: 1000, poche: true, ground: false, scan: true, cut: true, cam: 'section', scale: 200, own: {}, keepHere: false };
   try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { }
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
+  const DISPLAY = document.documentElement.classList.contains('sx-display');   // the big-screen window
+  const save = () => { if (DISPLAY) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
+
+  // ------------------------------------------------------------------ sharing the cut with the big screen and the projector
+  const LINK = 'BroadcastChannel' in window ? new BroadcastChannel('sitekit-link-' + pack.id) : null;
+  const lsend = m => { try { LINK && LINK.postMessage(m); } catch (e) { } };
+  const CUTKEYS = ['A', 'B', 'look', 'depth', 'above', 'poche', 'ground', 'scan', 'cut'];
+  const cutMsg = final => ({ t: 'cut', final: !!final, cam: S.cam, s: Object.fromEntries(CUTKEYS.map(k => [k, S[k]])), T, own: ownName });
+  let lastSend = 0, sendT = 0;
+  function shareCut(final) {                                // at most ~25 messages a second while dragging, always the last one
+    if (DISPLAY || !S.A) return;
+    clearTimeout(sendT);
+    const now = performance.now();
+    if (final || now - lastSend > 40) { lastSend = now; lsend(cutMsg(final)); }
+    else sendT = setTimeout(() => { lastSend = performance.now(); lsend(cutMsg(false)); }, 40);
+  }
+  let bigOpen = false, lastHello = 0;                        // a big-screen window is connected (controller only)
   const PUB = pack.splat ? Object.assign({ yaw: 0, x: 0, y: 0, z: 0, scale: 1 }, pack.splat) : null;
   let T = PUB ? Object.assign({}, PUB) : { yaw: 0, x: WM / 2, y: DM / 2, z: 0, scale: 1 };
   let ownName = null;                                       // name of a scan loaded from this computer
@@ -66,7 +85,7 @@ function main(G) {
       0, 0, 0, 1);
   }
   const toSurvey = (x, y, z) => { const s = T.scale || 1, c = Math.cos(rad(T.yaw)), sn = Math.sin(rad(T.yaw)); return [s * (c * x - sn * y) + T.x, s * (sn * x + c * y) + T.y, s * z + T.z + OFF]; };
-  function placeScan() { wake(3000); if (!mesh) return; mesh.matrixAutoUpdate = false; mesh.matrix.copy(scanMatrix()); mesh.matrixWorldNeedsUpdate = true; footprint(); }
+  function placeScan() { wake(3000); shareCut(false); if (!mesh) return; mesh.matrixAutoUpdate = false; mesh.matrix.copy(scanMatrix()); mesh.matrixWorldNeedsUpdate = true; footprint(); }
 
   // ------------------------------------------------------------------ loading
   const loadEl = $('load'), loadTxt = $('loadTxt'), loadBar = $('loadBar');
@@ -172,7 +191,7 @@ function main(G) {
     $('specLen').textContent = `${L.toFixed(0)} m`;
     $('specLook').textContent = compass(deg(Math.atan2(v[0], v[1])));
     $('specLev').textContent = P.lo === Infinity ? 'off the survey' : `${G.fmt(P.lo)} to ${G.fmt(P.hi)} m`;
-    drawSection();
+    if (DISPLAY) caption(); else { drawSection(); shareCut(false); }
   }
   function buildPoche() {
     if (poche) { scene.remove(poche); poche.geometry.dispose(); poche = null; }
@@ -222,7 +241,7 @@ function main(G) {
   // ------------------------------------------------------------------ cameras
   let tween = null;
   function setCam(kind, instant) {
-    S.cam = kind; save();
+    S.cam = kind; save(); shareCut(true);
     document.querySelectorAll('[data-cam]').forEach(b => b.classList.toggle('on', b.dataset.cam === kind));
     const { L, u, v, ax, ay } = geom(), P = profile(1), mid = [ax + u[0] * L / 2, ay + u[1] * L / 2];
     const lev = P.lo === Infinity ? (G.lo + G.hi) / 2 : (P.lo + P.hi) / 2 + 4;
@@ -259,13 +278,15 @@ function main(G) {
   let awakeUntil = 0;
   const wake = (ms = 1500) => { awakeUntil = Math.max(awakeUntil, performance.now() + ms); };
   controls.addEventListener('change', () => wake());
-  renderer.setAnimationLoop(now => { stepTween(now); controls.update(); if (tween || now < awakeUntil) renderer.render(scene, camera); });
+  const pausedHere = () => !DISPLAY && bigOpen && !S.keepHere;   // the big screen draws the scan: save the graphics card
+  renderer.setAnimationLoop(now => { stepTween(now); controls.update(); if ((tween || now < awakeUntil) && !pausedHere()) renderer.render(scene, camera); });
   window.__sx = { wake, scene, camera, renderer, get T() { return T; }, S };
 
   // ------------------------------------------------------------------ plan with the section line
   const planC = $('plan'), P = G.Plan(planC);
   let hillDone = false;
   function drawPlan() {
+    if (DISPLAY) return;                                     // the big screen has no plan
     P.size(); P.base({ labels: false, contourAlpha: 0.6 });
     const c = P.ctx;
     if (foot) {                                              // the scan's footprint, as one soft image
@@ -403,6 +424,7 @@ function main(G) {
   const SHEETS = [['A4', 297, 210], ['A3', 420, 297], ['A2', 594, 420], ['A1', 841, 594], ['A0', 1189, 841]];
   const sheetFor = M => SHEETS.find(([, w, h]) => M.w + 20 <= w && M.h + 20 <= h);
   function drawSection() {
+    if (DISPLAY) return;
     let M = sectionMarks(S.scale), box = $('draw');
     if (!M) { box.innerHTML = '<p class="small" style="padding:16px">The section line is off the survey.</p>'; $('dlPdf').disabled = $('dlSvg').disabled = true; $('paper').textContent = '—'; return; }
     const fit = Math.max(1.2, Math.min(4, (box.clientWidth - 2) / M.w));
@@ -525,6 +547,54 @@ function main(G) {
     T = { yaw: +fb[1].toFixed(3), x: +fb[2].toFixed(3), y: +fb[3].toFixed(3), z: +fb[4].toFixed(3), scale: sc };
     showAlign(); placeScan(); keepOwn(); applyCut();
     return `Fitted: ${Math.round(fb[0] * 100)}% of the open ground in the scan is within half a metre of the survey.${fb[0] < 0.5 ? ' That is a weak fit: check the roads and walls line up.' : ''}`;
+  }
+
+  // ------------------------------------------------------------------ big screen (controller) and display window
+  function caption() {                                       // the big screen's title line
+    const el = $('sxCap'); if (!el || !S.A) return;
+    el.innerHTML = `<b>${G.esc(pack.name)}</b><span>Section A–B · looking ${$('specLook').textContent} · ${$('specLen').textContent} · ground ${$('specLev').textContent}</span>`;
+  }
+  function bigLink(on) {
+    bigOpen = on;
+    const l = $('bigLink'); if (l) { l.textContent = on ? 'Big screen connected' : 'No big screen yet'; l.dataset.on = on ? '1' : '0'; }
+    const pv = $('sxPaused'); if (pv) pv.hidden = !pausedHere();
+    if (!pausedHere()) wake(2000);
+  }
+  if (LINK) LINK.onmessage = ({ data: m }) => {
+    if (DISPLAY) {
+      if (m.t === 'cut' && m.s && m.s.A) {
+        const camChanged = m.cam !== S.cam;
+        Object.assign(S, m.s);
+        if (m.T && !m.own && JSON.stringify(m.T) !== JSON.stringify(T)) { T = Object.assign({}, m.T); placeScan(); }
+        const note = $('sxNote'); if (note) note.hidden = !m.own;
+        CUTKEYS.forEach(k => { const id = { poche: 'cPoche', ground: 'cGround', scan: 'cScan', cut: 'cCut' }[k]; if (id) $(id).checked = !!S[k]; });
+        applyCut(); if (m.final || camChanged) setCam(m.cam);
+      } else if (m.t === 'display-ping') lsend({ t: 'display-hello' });
+      return;
+    }
+    if (m.t === 'display-hello') { lastHello = performance.now(); if (!bigOpen) { bigLink(true); lsend(cutMsg(true)); } }
+    else if (m.t === 'display-bye') bigLink(false);
+    else if (m.t === 'cut-request') lsend(cutMsg(true));
+  };
+  if (DISPLAY) {
+    // full screen with F; the mouse still orbits and zooms here, the cut comes from the controls window
+    const hint = $('sxHint'); let quiet;
+    const wakeHint = () => { if (!hint) return; hint.classList.remove('quiet'); clearTimeout(quiet); quiet = setTimeout(() => hint.classList.add('quiet'), 3000); };
+    wakeHint(); addEventListener('pointermove', wakeHint);
+    addEventListener('keydown', e => {
+      const k = e.key.toLowerCase();
+      if (k === 'f') { e.preventDefault(); (document.documentElement.requestFullscreen ? document.documentElement.requestFullscreen() : Promise.reject()).catch(() => { }); }
+      else if (k === 'r') setCam(S.cam);                    // back to the framed view after orbiting
+    });
+    addEventListener('pagehide', () => lsend({ t: 'display-bye' }));
+    lsend({ t: 'display-hello' }); setInterval(() => lsend({ t: 'display-hello' }), 2000);   // heartbeat
+  } else {
+    $('openBig').onclick = () => { window.open('sections.html?display&site=' + encodeURIComponent(pack.id), 'sitekit-bigscreen', 'popup,width=1280,height=720'); };
+    $('keepHere').checked = !!S.keepHere;
+    $('keepHere').onchange = e => { S.keepHere = e.target.checked; save(); bigLink(bigOpen); };
+    $('sxShowHere').onclick = () => { S.keepHere = true; $('keepHere').checked = true; save(); bigLink(bigOpen); };
+    bigLink(false); lsend({ t: 'display-ping' });
+    setInterval(() => { if (bigOpen && performance.now() - lastHello > 6000) bigLink(false); }, 2000);   // the big screen was closed
   }
 
   // ------------------------------------------------------------------ start

@@ -25,3 +25,22 @@
 .sx-dl select { font: 500 .82rem var(--mono); background: var(--paper); color: var(--ink); border: 1px solid var(--rule); border-radius: 3px; padding: 6px 8px }
 @media (max-width: 900px) { .sx-grid { grid-template-columns: 1fr } .sx-left { position: static } }
 .sx-load.err { color: #ffd2c4 } .sx-load.err i { display: none }
+
+/* paused while the big screen draws the scan */
+.sx-paused { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #101312; color: #cfd5d2; font: .85rem var(--mono); z-index: 2 }
+.sx-paused[hidden] { display: none }
+.sx-paused p { margin: 0 }
+.sx-paused button { background: #f4f1ea; color: #101312; border: 0; border-radius: 3px; padding: 7px 12px; font: 500 .78rem var(--mono); cursor: pointer }
+.sx-cap, .sx-hint, .sx-note { display: none }
+
+/* sections.html?display: the big-screen window, the 3D view and a title line only */
+html.sx-display, html.sx-display body { background: #101312; height: 100%; overflow: hidden; margin: 0 }
+html.sx-display header, html.sx-display footer, html.sx-display .hero, html.sx-display #drawing, html.sx-display #how,
+html.sx-display .sx-panel, html.sx-display .sx-left > .pj-bar, html.sx-display .sx-tools, html.sx-display .sx-paused { display: none !important }
+html.sx-display #cut, html.sx-display #cut .wrap, html.sx-display .sx-grid, html.sx-display .sx-left { display: block; margin: 0; padding: 0; max-width: none; position: static }
+html.sx-display .sx-view { position: fixed; inset: 0; aspect-ratio: auto; border: 0; cursor: grab }
+html.sx-display .sx-cap { display: flex; flex-direction: column; gap: .3vw; position: absolute; left: 2.2vw; bottom: 2vw; color: #f4f1ea; font: 500 clamp(14px, 1.35vw, 30px) var(--mono); text-shadow: 0 1px 6px #000c; pointer-events: none }
+html.sx-display .sx-cap b { font: 800 clamp(22px, 2.6vw, 60px) var(--display); letter-spacing: -.01em }
+html.sx-display .sx-note:not([hidden]) { display: block; position: absolute; right: 2vw; top: 2vw; margin: 0; max-width: 34vw; color: #ffd2c4; font: clamp(12px, .9vw, 18px) var(--mono); text-align: right }
+html.sx-display .sx-hint { display: block; position: absolute; right: 2vw; bottom: 2vw; margin: 0; color: #888; font: 12px var(--mono); transition: opacity .6s }
+html.sx-display .sx-hint.quiet { opacity: 0 }
