@@ -125,8 +125,9 @@ Cuts the site's 3D Gaussian-splat scan along any vertical plane, with the survey
 
 Projects layers onto a physical white site model from a projector pointing straight down.
 
-- **Model on the table.** Whole survey, the class tile model, or the square saved on Your model. Base thickness and height exaggeration match the model that was made.
+- **Model on the table.** Whole survey, the class tile model, or the square saved on Your model. Base thickness and height exaggeration match the model that was made. **Model scale** (1:200 for kit models, down to 1:2500 for a town model) sets the height correction, the projector offsets and GIS line widths; the corner pins handle the plan at any scale.
 - **Layers.** Elevation colours, hillshade, contours (0.5–5 m), slope for access (1:20–1:12 amber, steeper red), site features, water level, sun and shadow for any date and time (with Play the day), and your own image stretched to the model outline.
+- **GIS layers.** GeoJSON files from QGIS or ArcGIS (several at once), a GeoJSON URL, a WFS URL, or an ArcGIS feature service layer (`…/FeatureServer/0`, fetched as GeoJSON in WGS 84, only near the model, paged past the service's record limit). Coordinates are read from the file's `crs` or worked out from the numbers (WGS 84, ITM, Irish Grid, Web Mercator, site metres) and can be changed per layer. Sites built from GeoTIFF tiles already know their map position; for an STL site type the ITM easting and northing of the survey's south-west corner (otherwise it is estimated from the site's latitude and longitude), with east/north nudges and a turn. Per layer: colour, width, strength, fill, **Colour by** a field (categories, or five equal-count classes for numbers, with a key), and **Animate** (dashes run along lines; areas and points pulse). Geometry is kept in IndexedDB (`sitekit-gis`, per site) and styles with the other projection settings, so layers survive a reload and reach the projector window. The service must allow cross-origin requests (ArcGIS Online public layers do); otherwise export GeoJSON and load the file.
 - **Two windows.** The control page drives a projector window (`project.html?out`, black, full screen with F). They stay in step through BroadcastChannel. "Full screen here" serves a mirrored display.
 - **Calibration.** Drag the four corners onto the model base, then set lens height and projector east/north offset until the red crosshairs sit on the three high points. The image is warped by the height of each point (parallax) and then a four-corner homography. Settings are saved per site and model in `localStorage` (`sitekit-proj-<site>`). C toggles handles; arrow keys nudge the last corner (Shift ×10).
 - **Defaults.** Lens 1400 mm above the corners (2.55 m room, table about 750 mm, projector body about 300 mm) and 16:10 output (1920 × 1200).
@@ -155,6 +156,7 @@ Serve over http(s) (GitHub Pages works). Opening the files directly from disk bl
 - `js/contours.js`, `js/sun.js`, `js/climate.js`, `js/kit.js`, `js/model.js`, `js/setup.js`, `js/home.js` page scripts
 - `js/splash.js`, `css/splash.css` home-page splash
 - `js/project.js`, `css/project.css` projection mapping
+- `js/gis-layers.js` GIS layers for projection: GeoJSON and ArcGIS/WFS reading, placement on the site, colour classes, drawing, IndexedDB store
 - `js/sections.js`, `css/sections.css` sections through the scan (ES module)
-- `js/dem-import.js` GeoTIFF tiles → mosaic → site grid, and map projections (setup page)
+- `js/dem-import.js` GeoTIFF tiles → mosaic → site grid, and map projections (setup and projection pages)
 - `vendor/` three.js r128, OrbitControls, jsPDF 2.5.1, JSZip 3.10.1, geotiff.js 2.1.3 (setup page); `vendor/three` (three.js 0.180 modules) and `vendor/spark` (Spark 2.3.1) for the Sections page

@@ -5,7 +5,9 @@
    How the image lands on the model
    - Layers are drawn into a texture in plan coordinates (north up), covering the model's outline.
    - A grid mesh covers the outline. Each vertex is a point on the ground: (x, y) in plan mm at 1:200 and
-     z = base + (level − datum) × 5 × vertical scale, in mm above the surface the corners are pinned to.
+     z = base + (level − datum) × 1000 / model scale × vertical scale, in mm above the surface the corners are pinned to.
+     (The physical model can be at another scale, for example 1:1000 for a town; only z, the projector offsets and
+     GIS line widths depend on it, because the four corner pins take care of the plan.)
    - The projector is a point at (cx, cy, h) above that surface. The ray from it through a raised point meets the
      surface further out: p' = c + (p − c) × h / (h − z). That base-plane point is then taken to the screen with the
      homography fixed by the four corner pins. So the four pins square the image up, and the projector height and
@@ -22,12 +24,16 @@
   // ---------------------------------------------------------------- state
   const today = (() => { const d = new Date(); return d.toISOString().slice(0, 10); })();
   const S = {
-    area: 'site', base: 3, vex: 1, aspect: 1.6,
-    layers: { elev: true, hill: true, cont: true, slope: false, feat: true, flood: false, sun: false, img: false, cal: false },
+    area: 'site', base: 3, vex: 1, aspect: 1.6, scale: 200,   // scale: the physical model's scale, 1:scale
+    layers: { elev: true, hill: true, cont: true, slope: false, feat: true, flood: false, sun: false, img: false, cal: false, gis: true },
     ci: 1, flood: 0.2, date: today, time: 0.5, imgOp: 0.85,
-    calib: {}                                   // per model: { corners: [[u,v]×4 SW,SE,NE,NW], h, nx, ny }
+    calib: {},                                  // per model: { corners: [[u,v]×4 SW,SE,NE,NW], h, nx, ny }
+    gis: [],                                    // GIS layer styles, top of the list drawn last (geometry is in IndexedDB)
+    gisPlace: { crs: 'auto', E: '', N: '', dx: 0, dy: 0, rot: 0 }   // where map data sits on the site
   };
-  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) { Object.assign(S, s); S.layers = Object.assign({}, S.layers, s.layers); } } catch (e) { }
+  const PLACE0 = Object.assign({}, S.gisPlace);
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) { Object.assign(S, s); S.layers = Object.assign({}, S.layers, s.layers); S.gisPlace = Object.assign({}, PLACE0, s.gisPlace); } } catch (e) { }
+  if (!Array.isArray(S.gis)) S.gis = [];
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
   let IMG = null;                               // the user's image (not saved, sent between windows)
 
@@ -62,7 +68,8 @@
     a.pins = pins;
     return a;
   }
-  const zmm = (A0, hm) => S.base + ((hm === hm ? hm : A0.datum) - A0.datum) * 5 * S.vex;     // mm above the pinned surface
+  const K = () => 200 / (+S.scale || 200);                     // model mm per plan mm (plan mm are always 1:200)
+  const zmm = (A0, hm) => S.base + ((hm === hm ? hm : A0.datum) - A0.datum) * 1000 / (+S.scale || 200) * S.vex;     // mm above the pinned surface
   const heightAt = (A0, x, y) => { const v = G.height(x, y); return v === v ? v : NaN; };
   const cal = () => {
     const k = A.key; if (!S.calib[k]) S.calib[k] = { corners: null, h: 1400, nx: 0, ny: 0 };
@@ -121,9 +128,10 @@
   const TX = x => (x - A.x0) / A.w * tex.width, TY = y => (1 - (y - A.y0) / A.h) * tex.height;
   const north = rad(+pack.north || 0);
 
+  const gis = document.createElement('canvas'), gctx = gis.getContext('2d');          // GIS layers (cached unless animated)
   function sizeTex() {
     const tw = A.w >= A.h ? TEXL : Math.round(TEXL * A.w / A.h), th = A.w >= A.h ? Math.round(TEXL * A.h / A.w) : TEXL;
-    for (const c of [tex, vec]) { c.width = tw; c.height = th; }
+    for (const c of [tex, vec, gis]) { c.width = tw; c.height = th; }
     ras.width = A.gw; ras.height = A.gh;
   }
   function drawVector() {                                            // contours, features, alignment grid
@@ -202,16 +210,60 @@
     }
     return Object.assign(out, { gw, gh });
   }
+  // ---------------------------------------------------------------- GIS layers (js/gis-layers.js)
+  // Each window keeps the layers' geometry in memory (RAW, as read) and converted to site metres for the current
+  // placement (CONV). Styles live in S.gis, so they are saved and sent between windows with everything else.
+  const GL = window.GISLayers, RAW = new Map(), CONV = new Map(), pending = new Set();
+  const gisKey = id => pack.id + ':' + id;
+  const gisOrigin = () => GL ? GL.origin(pack, G, S.gisPlace) : null;
+  function convFor(st) {
+    const raw = RAW.get(st.id); if (!raw || !GL) return null;
+    const k = JSON.stringify(S.gisPlace) + '|' + st.epsg;
+    let c = CONV.get(st.id);
+    if (!c || c.k !== k) {
+      try { c = { k, conv: GL.convert(raw, st.epsg, gisOrigin(), G, S.gisPlace) }; } catch (e) { c = { k, conv: null, err: e.message }; }
+      CONV.set(st.id, c);
+    }
+    return c;
+  }
+  let gisDirty = true;
+  function drawGis(t) {
+    gctx.clearRect(0, 0, gis.width, gis.height);
+    if (!S.layers.gis || !GL) return;
+    const px = tex.width / A.w / K(), X = m => TX(m * 5), Y = m => TY(m * 5);    // texture px per model mm
+    for (let i = S.gis.length - 1; i >= 0; i--) { const st = S.gis[i], c = convFor(st); if (c && c.conv) GL.draw(gctx, st, c.conv, X, Y, px, t); }
+  }
+  function loadMissing() {                                          // geometry for layers this window has not seen yet
+    if (!GL) return;
+    S.gis.forEach(st => {
+      if (RAW.has(st.id) || pending.has(st.id)) return;
+      pending.add(st.id);
+      GL.store.get(gisKey(st.id)).then(r => { if (r && !RAW.has(st.id)) { RAW.set(st.id, r); CONV.delete(st.id); gisDirty = true; compose(true); if (!OUT) renderGis(); } })
+        .catch(() => { }).finally(() => pending.delete(st.id));
+    });
+  }
+  const gisAnimating = () => S.layers.gis && S.gis.some(s => s.on && s.anim && RAW.has(s.id));
+  let animF = 0, animLast = 0;
+  function animTick(now) {
+    if (!gisAnimating()) { animF = 0; return; }
+    if (now - animLast > 45) { animLast = now; compose(true); }      // about 20 frames a second is plenty for dashes
+    animF = requestAnimationFrame(animTick);
+  }
+  const ensureAnim = () => { if (!animF && gisAnimating()) animF = requestAnimationFrame(animTick); };
+
   let vecDirty = true;
-  function compose() {
+  function compose(lite) {                                           // lite: GIS only changed, keep the terrain raster
     if (vecDirty) { drawVector(); vecDirty = false; }
-    drawRaster();
+    if (!lite) drawRaster();
+    if (gisDirty || gisAnimating()) { drawGis(performance.now() / 1000); gisDirty = false; }
     tctx.imageSmoothingEnabled = true; tctx.imageSmoothingQuality = 'high';
     tctx.fillStyle = '#000'; tctx.fillRect(0, 0, tex.width, tex.height);
     tctx.drawImage(ras, 0, 0, tex.width, tex.height);
     if (S.layers.img && IMG) { tctx.globalAlpha = S.imgOp; tctx.drawImage(IMG, 0, 0, tex.width, tex.height); tctx.globalAlpha = 1; }
+    if (S.layers.gis && S.gis.length) tctx.drawImage(gis, 0, 0);
     tctx.drawImage(vec, 0, 0);
     views.forEach(v => v.texUpdate());
+    ensureAnim();
   }
 
   // ---------------------------------------------------------------- mapping: plan point + height → screen
@@ -231,7 +283,7 @@
   function mapper(wpx, hpx) {
     const c = cal(), base = [[A.x0, A.y0], [A.x0 + A.w, A.y0], [A.x0 + A.w, A.y0 + A.h], [A.x0, A.y0 + A.h]];
     const Hm = homography(base, c.corners.map(([u, v]) => [u * wpx, v * hpx]));
-    const cx = A.x0 + A.w / 2 + c.nx, cy = A.y0 + A.h / 2 + c.ny, hh = Math.max(50, c.h);
+    const cx = A.x0 + A.w / 2 + c.nx / K(), cy = A.y0 + A.h / 2 + c.ny / K(), hh = Math.max(50, c.h);   // offsets are real mm on the table
     return (x, y, z) => { const s = hh / Math.max(1, hh - z); return applyH(Hm, cx + (x - cx) * s, cy + (y - cy) * s); };
   }
 
@@ -315,21 +367,27 @@
   // ---------------------------------------------------------------- changes and sync
   let syncT = 0;
   function calChanged(final) { views.forEach(v => v.warp()); showCal(); if (final) { save(); } clearTimeout(syncT); syncT = setTimeout(() => send({ t: 'state', s: S }), final ? 0 : 30); }
-  function rebuild() { A = area(); sizeTex(); vecDirty = true; compose(); views.forEach(v => v.build()); showArea(); }
-  function changed(what) {                                         // what: 'area' | 'vec' | 'ras' | 'geo'
+  function rebuild() { A = area(); sizeTex(); vecDirty = true; gisDirty = true; compose(); views.forEach(v => v.build()); showArea(); }
+  function changed(what) {                                         // what: 'area' | 'vec' | 'ras' | 'geo' | 'gis'
     if (what === 'area') rebuild();
+    else if (what === 'gis') { gisDirty = true; compose(true); }
     else { if (what === 'vec') vecDirty = true; if (what === 'geo') views.forEach(v => v.build()); compose(); }
     save(); send({ t: 'state', s: S }); syncUI();
   }
   if (ch) ch.onmessage = ({ data: m }) => {
     if (m.t === 'state') {
-      const areaChanged = m.s.area !== S.area || m.s.base !== S.base || m.s.vex !== S.vex || m.s.aspect !== S.aspect;
+      const areaChanged = m.s.area !== S.area || m.s.base !== S.base || m.s.vex !== S.vex || m.s.aspect !== S.aspect || m.s.scale !== S.scale;
       const vecChanged = ['cont', 'feat', 'cal'].some(k => m.s.layers[k] !== S.layers[k]) || m.s.ci !== S.ci;
-      Object.assign(S, JSON.parse(JSON.stringify(m.s)));
+      const gisChanged = JSON.stringify(m.s.gis) !== JSON.stringify(S.gis) || JSON.stringify(m.s.gisPlace) !== JSON.stringify(S.gisPlace) || m.s.layers.gis !== S.layers.gis;
+      const s2 = JSON.parse(JSON.stringify(m.s));
+      Object.assign(S.layers, s2.layers); delete s2.layers;           // keep the same layers object: the controls hold it
+      Object.assign(S, s2);
+      if (gisChanged) { gisDirty = true; [...RAW.keys()].forEach(id => { if (!S.gis.some(s => s.id === id)) { RAW.delete(id); CONV.delete(id); } }); loadMissing(); }
       if (areaChanged) rebuild(); else { if (vecChanged) vecDirty = true; compose(); views.forEach(v => v.warp()); }
-      syncUI();
+      syncUI(); if (gisChanged && !OUT) { renderGis(); showPlace(); }
     } else if (m.t === 'img') { loadImg(m.d, false); }
-    else if (m.t === 'hello' && !OUT) { if (m.aspect) { S.aspect = +m.aspect.toFixed(4); setAspect(); } send({ t: 'state', s: S }); if (IMG) send({ t: 'img', d: IMG.src }); link(true); }
+    else if (m.t === 'gisAdd') { RAW.set(m.id, m.raw); CONV.delete(m.id); gisDirty = true; compose(true); }
+    else if (m.t === 'hello' && !OUT) { if (m.aspect) { S.aspect = +m.aspect.toFixed(4); setAspect(); } send({ t: 'state', s: S }); if (IMG) send({ t: 'img', d: IMG.src }); RAW.forEach((raw, id) => send({ t: 'gisAdd', id, raw })); link(true); }
     else if (m.t === 'bye' && !OUT) link(false);
     else if (m.t === 'ping' && OUT) send({ t: 'hello', aspect: innerWidth / Math.max(1, innerHeight) });
   };
@@ -342,7 +400,7 @@
   if (OUT) {
     const st = $('outStage'); st.hidden = false;
     const v = View($('out'), $('outOv'), st);
-    rebuild();
+    rebuild(); loadMissing();
     const hello = () => send({ t: 'hello', aspect: innerWidth / Math.max(1, innerHeight) });
     hello(); addEventListener('resize', () => { hello(); });
     addEventListener('beforeunload', () => send({ t: 'bye' }));
@@ -373,9 +431,11 @@
   const bindCheck = (id, k, kind) => { $(id).checked = !!L[k]; $(id).onchange = e => { L[k] = e.target.checked; changed(kind); }; };
   bindCheck('lElev', 'elev', 'ras'); bindCheck('lHill', 'hill', 'ras'); bindCheck('lCont', 'cont', 'vec'); bindCheck('lSlope', 'slope', 'ras');
   bindCheck('lFeat', 'feat', 'vec'); bindCheck('lFlood', 'flood', 'ras'); bindCheck('lSun', 'sun', 'ras'); bindCheck('lImg', 'img', 'ras'); bindCheck('lCal', 'cal', 'vec');
+  bindCheck('lGis', 'gis', 'gis');
   $('pArea').value = S.area; $('pArea').onchange = e => { S.area = e.target.value; changed('area'); };
   $('pBase').value = S.base; $('pBase').onchange = e => { S.base = +e.target.value; changed('geo'); };
   $('pVex').value = S.vex; $('pVex').onchange = e => { S.vex = +e.target.value; changed('geo'); };
+  $('pScale').value = String(S.scale || 200); $('pScale').onchange = e => { S.scale = +e.target.value; changed('area'); };
   $('pCI').value = S.ci; $('pCI').onchange = e => { S.ci = +e.target.value; changed('vec'); };
   $('pFlood').value = Math.round(S.flood * 1000); $('pFlood').oninput = e => { S.flood = +e.target.value / 1000; if (!L.flood) { L.flood = true; $('lFlood').checked = true; } changed('ras'); };
   $('pDate').value = S.date; $('pDate').onchange = e => { S.date = e.target.value || today; if (!L.sun) { L.sun = true; $('lSun').checked = true; } changed('ras'); };
@@ -407,17 +467,127 @@
   }
   function showArea() {
     if (OUT) return;
-    const relief = (A.hi - A.datum) * 5 * S.vex + S.base;
-    $('areaNote').textContent = `Projecting onto ${A.label}: ${Math.round(A.w)} × ${Math.round(A.h)} mm at 1:200 (${Math.round(A.w / 5)} × ${Math.round(A.h / 5)} m), up to ${relief.toFixed(0)} mm high. The projected image must be at least this big on the table.`;
+    const relief = (A.hi - A.datum) * 1000 / (+S.scale || 200) * S.vex + S.base, k = K();
+    $('areaNote').textContent = `Projecting onto ${A.label}: ${Math.round(A.w * k)} × ${Math.round(A.h * k)} mm at 1:${S.scale || 200} (${Math.round(A.w / 5)} × ${Math.round(A.h / 5)} m), up to ${relief.toFixed(0)} mm high. The projected image must be at least this big on the table.`;
     calInputs(); showCal();
   }
   function syncUI() {
     if (OUT) return;
-    Object.entries({ lElev: 'elev', lHill: 'hill', lCont: 'cont', lSlope: 'slope', lFeat: 'feat', lFlood: 'flood', lSun: 'sun', lImg: 'img', lCal: 'cal' }).forEach(([id, k]) => $(id).checked = !!L[k]);
+    Object.entries({ lElev: 'elev', lHill: 'hill', lCont: 'cont', lSlope: 'slope', lFeat: 'feat', lFlood: 'flood', lSun: 'sun', lImg: 'img', lCal: 'cal', lGis: 'gis' }).forEach(([id, k]) => $(id).checked = !!L[k]);
     $('oFlood').textContent = L.flood ? `${G.fmt(A.lo + S.flood * (A.hi - A.lo))} m` : '—';
     if (L.sun) { const s = sunNow(); $('oSun').textContent = s.alt > 0 ? `${hhmm(s.hrs)} · ${s.alt.toFixed(0)}° from the ${compass(s.az)}` : `${hhmm(s.hrs)} · below the horizon`; } else $('oSun').textContent = '—';
     $('specOut').textContent = { 1.6: '1920 × 1200', 1.7778: '1920 × 1080', 1.3333: '1024 × 768' }[S.aspect] || `${S.aspect.toFixed(2)} : 1`;
   }
+  // ---------------------------------------------------------------- GIS layers: loading, list, placement
+  const EPSG_NAME = { 4326: 'lon/lat', 2157: 'ITM', 29903: 'Irish Grid', 29902: 'Irish Grid', 3857: 'Web Mercator', site: 'site metres', 27700: 'British National Grid' };
+  const epsgName = e => EPSG_NAME[e] || 'EPSG ' + e;
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const gmsg = (t, k) => { const el = $('gMsg'); el.hidden = !t; el.textContent = t || ''; el.dataset.k = k || 'ok'; };
+  async function addLayer(p, name, url) {
+    if (!p.feats.length) throw new Error(`${name}: no features in it.`);
+    const pc = S.gisPlace.crs, fallback = pc === 'auto' ? null : pc === 'site' ? 'site' : +pc;
+    const epsg = p.epsg || fallback || GL.guessEpsg(p.feats, pack.source && pack.source.epsg);
+    const kind = GL.kindOf(p.feats);
+    const st = {
+      id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name, on: true,
+      color: GL.COLOURS[S.gis.length % GL.COLOURS.length], width: kind === 'line' ? 2.5 : kind === 'point' ? 2.5 : 1,
+      op: 0.9, fill: true, by: '', anim: false, kind, props: GL.props(p.feats), count: p.feats.length, epsg, url: url || ''
+    };
+    RAW.set(st.id, p.feats);
+    let kept = true; try { await GL.store.put(gisKey(st.id), p.feats); } catch (e) { kept = false; }
+    S.gis.unshift(st);
+    send({ t: 'gisAdd', id: st.id, raw: p.feats });
+    changed('gis'); renderGis();
+    const c = convFor(st);
+    if (c.err) return gmsg(`${name}: ${c.err}`, 'err');
+    const on = c.conv.inside, o = gisOrigin();
+    gmsg(`${name}: ${on.toLocaleString()} of ${c.conv.total.toLocaleString()} features fall on the model (read as ${epsgName(epsg)}).` +
+      (!on ? ' None land on the model: check the coordinates under Where the data sits, or the layer\'s own coordinate setting.' : o && o.approx && epsg !== 'site' ? ' The site\'s map position is estimated: type its south-west corner for an exact fit.' : '') +
+      (kept ? '' : ' This browser could not keep it, so it will be gone after a reload.'), !on ? 'warn' : o && o.approx && epsg !== 'site' ? 'warn' : 'ok');
+  }
+  $('gFile').onchange = async e => {
+    const files = [...e.target.files]; e.target.value = '';
+    for (const f of files) {
+      try { gmsg(`Reading ${f.name}…`); await addLayer(GL.parse(await f.text()), f.name.replace(/\.(geo)?json$/i, ''), ''); }
+      catch (er) { gmsg(`${f.name}: ${er.message}`, 'err'); }
+    }
+  };
+  $('gUrlGo').onclick = async () => {
+    const url = $('gUrl').value.trim(); if (!url) return;
+    $('gUrlGo').disabled = true; gmsg('Loading…');
+    try {
+      const o = gisOrigin(), b = o ? GL.boundsLL(o, G, S.gisPlace) : null;
+      const p = await GL.fetchLayer(url, b, n => gmsg(`Loading… ${n.toLocaleString()} features so far`));
+      await addLayer(p, p.name, url); $('gUrl').value = '';
+    } catch (er) { gmsg(er.message, 'err'); }
+    $('gUrlGo').disabled = false;
+  };
+  $('gUrl').onkeydown = e => { if (e.key === 'Enter') $('gUrlGo').click(); };
+
+  function renderGis() {
+    const box = $('gList'); box.innerHTML = '';
+    S.gis.forEach((st, i) => {
+      const c = convFor(st), cls = c && c.conv ? GL.legendFor(c.conv, st.by) : null;
+      const row = document.createElement('div'); row.className = 'pj-gl'; row.dataset.on = st.on ? '1' : '0';
+      const opt = (v, t, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(t)}</option>`;
+      row.innerHTML = `
+        <div class="pj-gh"><input type="checkbox" data-k="on"${st.on ? ' checked' : ''} aria-label="Show ${esc(st.name)}">
+          <input type="color" data-k="color" value="${esc(st.color)}" aria-label="Colour"${st.by ? ' disabled' : ''}>
+          <span class="pj-gn" title="${esc(st.name)}${st.url ? '\n' + esc(st.url) : ''} · double-click to rename">${esc(st.name)}</span>
+          <span class="pj-gb"><button type="button" data-a="up" aria-label="Move up"${i ? '' : ' disabled'}>↑</button><button type="button" data-a="down" aria-label="Move down"${i < S.gis.length - 1 ? '' : ' disabled'}>↓</button><button type="button" data-a="del" class="danger" aria-label="Remove">✕</button></span></div>
+        <div class="pj-gmeta">${{ line: 'lines', poly: 'areas', point: 'points', mixed: 'mixed' }[st.kind] || ''} · ${c && c.conv ? `${c.conv.inside.toLocaleString()} of ${c.conv.total.toLocaleString()} on the model${c.conv.inside ? '' : ' <b>· none on the model</b>'}` : !RAW.has(st.id) ? '<b>not in this browser: load the file again</b>' : `<b>${esc(c.err)}</b>`}</div>
+        <div class="pj-gopts">
+          <label title="Line width or point size on the model">${st.kind === 'poly' ? 'Outline' : st.kind === 'point' ? 'Size' : 'Width'} <input type="range" data-k="width" min="0.2" max="6" step="0.1" value="${st.width}"></label>
+          <label>Strength <input type="range" data-k="op" min="0.1" max="1" step="0.05" value="${st.op}"></label>
+          <label class="wide">Colour by <select data-k="by">${opt('', 'one colour', !st.by)}${(st.props || []).map(k => opt(k, k, st.by === k)).join('')}</select></label>
+          <label class="wide">Coordinates <select data-k="epsg">${[4326, 2157, 29903, 3857, 'site'].concat([4326, 2157, 29903, 3857, 'site'].includes(st.epsg) ? [] : [st.epsg]).map(e => opt(e, epsgName(e), String(e) === String(st.epsg))).join('')}</select></label>
+          <label><input type="checkbox" data-k="anim"${st.anim ? ' checked' : ''}> ${st.kind === 'line' ? 'Animate' : 'Pulse'}</label>
+          ${st.kind === 'poly' || st.kind === 'mixed' ? `<label><input type="checkbox" data-k="fill"${st.fill !== false ? ' checked' : ''}> Fill</label>` : ''}
+        </div>
+        ${cls ? `<div class="pj-leg">${cls.legend.map(([col, t]) => `<span title="${esc(t)}"><i style="--c:${col}"></i>${esc(t)}</span>`).join('')}</div>` : ''}`;
+      row.querySelectorAll('[data-k]').forEach(el => {
+        const k = el.dataset.k, live = el.type === 'range' || el.type === 'color';
+        el[live ? 'oninput' : 'onchange'] = () => {
+          st[k] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : k === 'epsg' ? (el.value === 'site' ? 'site' : +el.value) : el.value;
+          if (k === 'on') row.dataset.on = st.on ? '1' : '0';
+          changed('gis');
+          if (k === 'by' || k === 'epsg') renderGis();
+        };
+      });
+      row.querySelector('.pj-gn').ondblclick = () => { const n = prompt('Layer name', st.name); if (n && n.trim()) { st.name = n.trim(); changed('gis'); renderGis(); } };
+      row.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+        const a = b.dataset.a;
+        if (a === 'del') { if (!confirm(`Remove ${st.name} from this site?`)) return; S.gis.splice(i, 1); RAW.delete(st.id); CONV.delete(st.id); GL.store.del(gisKey(st.id)).catch(() => { }); }
+        else { const j = a === 'up' ? i - 1 : i + 1; [S.gis[i], S.gis[j]] = [S.gis[j], S.gis[i]]; }
+        changed('gis'); renderGis();
+      });
+      box.appendChild(row);
+    });
+  }
+
+  // where the data sits: the survey's south-west corner on the map, and small corrections
+  function showPlace() {
+    const o = gisOrigin(), src = pack.source || {}, packGeo = src.type === 'geotiff' && src.origin;
+    $('gCrs').value = S.gisPlace.crs;
+    $('gE').value = S.gisPlace.E; $('gN').value = S.gisPlace.N; $('gDx').value = S.gisPlace.dx; $('gDy').value = S.gisPlace.dy; $('gRot').value = S.gisPlace.rot;
+    const def = (() => { const save = [S.gisPlace.E, S.gisPlace.N]; S.gisPlace.E = S.gisPlace.N = ''; const d = gisOrigin(); [S.gisPlace.E, S.gisPlace.N] = save; return d; })();
+    $('gE').placeholder = def ? def.E.toFixed(0) : 'easting'; $('gN').placeholder = def ? def.N.toFixed(0) : 'northing';
+    const sys = o ? epsgName(o.epsg) : 'ITM';
+    $('gOrigNote').textContent = !o ? 'This site has no map position yet: type the easting and northing (ITM) of the survey\'s south-west corner.'
+      : o.source === 'pack' ? `From the survey tiles: the south-west corner is E ${o.E.toFixed(1)}, N ${o.N.toFixed(1)} (${sys}). Leave the boxes empty to use it.`
+      : o.source === 'typed' ? `Using the corner you typed (${sys}). Empty both boxes to go back to ${packGeo ? 'the survey tiles' : 'the estimate'}.`
+      : `Estimated from the site's latitude and longitude (${(+pack.lat).toFixed(4)}, ${(+pack.lon).toFixed(4)}), so it can be tens of metres out. Type the ITM easting and northing of the survey's south-west corner for an exact fit, then use the nudges.`;
+    const tweak = +S.gisPlace.dx || +S.gisPlace.dy || +S.gisPlace.rot ? ' · nudged' : '';
+    $('gPlaceSum').textContent = (!o ? 'not set' : o.source === 'pack' ? 'from the survey tiles' : o.source === 'typed' ? 'typed in' : 'estimated') + tweak;
+  }
+  const placeChanged = () => { CONV.clear(); changed('gis'); showPlace(); renderGis(); };
+  $('gCrs').onchange = e => { S.gisPlace.crs = e.target.value; save(); send({ t: 'state', s: S }); };
+  [['gE', 'E'], ['gN', 'N']].forEach(([id, k]) => $(id).onchange = e => { S.gisPlace[k] = e.target.value === '' ? '' : +e.target.value; placeChanged(); });
+  [['gDx', 'dx'], ['gDy', 'dy'], ['gRot', 'rot']].forEach(([id, k]) => $(id).onchange = e => { S.gisPlace[k] = +e.target.value || 0; placeChanged(); });
+  if (gisOrigin()?.approx && S.gis.length) $('gPlace').open = true;
+  if (!GL) $('gisGroup').hidden = true;
+
   setAspect(); rebuild(); syncUI(); link(false);
+  showPlace(); loadMissing(); renderGis();
   send({ t: 'state', s: S }); send({ t: 'ping' });
 })();

@@ -34,7 +34,7 @@ if (/[?&]out\b/.test(location.search)) document.documentElement.classList.add('p
       <div><dt>Lens height</dt><dd id="specH">1400 mm</dd></div>
       <div><dt>Output</dt><dd id="specOut">1920 × 1200</dd></div>
       <div><dt>Calibration</dt><dd>4 corners + height</dd></div>
-      <div><dt>Layers</dt><dd>9</dd></div>
+      <div><dt>Layers</dt><dd>9 + GIS</dd></div>
     </dl>
   </div>
 
@@ -65,6 +65,8 @@ if (/[?&]out\b/.test(location.search)) document.documentElement.classList.add('p
               <div class="cfield"><label class="lbl" for="pVex">Heights</label>
                 <select id="pVex"><option value="1" selected>True scale</option><option value="1.5">1.5×</option><option value="2">2×</option></select></div>
             </div>
+            <div class="cfield"><label class="lbl" for="pScale" title="The scale of the physical model on the table. Site kit models are 1:200; a town model is usually smaller.">Model scale</label>
+              <select id="pScale"><option value="200" selected>1:200 (site kit)</option><option value="500">1:500</option><option value="1000">1:1000 (town)</option><option value="1250">1:1250</option><option value="2500">1:2500</option></select></div>
             <p class="small" id="areaNote">—</p>
           </div>
 
@@ -86,6 +88,40 @@ if (/[?&]out\b/.test(location.search)) document.documentElement.classList.add('p
             <label class="pj-l"><input type="checkbox" id="lImg"> Your image <input type="file" id="pImg" accept="image/*" aria-label="Choose an image"></label>
             <input type="range" id="pImgOp" min="10" max="100" value="85" aria-label="Image strength">
             <p class="small">Images are stretched to the model's outline, north up: crop a plan or aerial photo to the same square before you load it.</p>
+          </div>
+
+          <div class="pj-group" id="gisGroup">
+            <h3>GIS layers</h3>
+            <p class="small">Bus routes, zoning, vacant buildings: any layer exported from QGIS or ArcGIS as GeoJSON, or read straight from an ArcGIS feature service. Layers are kept in this browser for this site.</p>
+            <label class="pj-l"><input type="checkbox" id="lGis" checked> Show GIS layers <input type="file" id="gFile" accept=".geojson,.json,application/geo+json,application/json" multiple aria-label="Choose GeoJSON files"></label>
+            <div class="pj-url">
+              <input type="url" id="gUrl" placeholder="https://…/FeatureServer/0  or a .geojson address" aria-label="Layer address">
+              <button type="button" id="gUrlGo">Load</button>
+            </div>
+            <p class="small pj-msg" id="gMsg" hidden></p>
+            <div class="pj-glist" id="gList"></div>
+            <details class="pj-place" id="gPlace">
+              <summary>Where the data sits <span id="gPlaceSum">—</span></summary>
+              <div class="cfield"><label class="lbl" for="gCrs">Coordinates in files that don't say</label>
+                <select id="gCrs">
+                  <option value="auto">Work it out from the numbers</option>
+                  <option value="4326">Longitude / latitude (WGS 84, EPSG:4326)</option>
+                  <option value="2157">Irish Transverse Mercator (ITM, EPSG:2157)</option>
+                  <option value="29903">Irish Grid (TM65, EPSG:29903)</option>
+                  <option value="3857">Web Mercator (EPSG:3857)</option>
+                  <option value="site">Site metres from the south-west corner</option>
+                </select></div>
+              <div class="mrow">
+                <div class="cfield"><label class="lbl" for="gE">South-west corner · easting</label><input type="number" id="gE" step="0.1" inputmode="decimal"></div>
+                <div class="cfield"><label class="lbl" for="gN">northing</label><input type="number" id="gN" step="0.1" inputmode="decimal"></div>
+              </div>
+              <p class="small" id="gOrigNote">—</p>
+              <div class="mrow">
+                <div class="cfield"><label class="lbl" for="gDx">Nudge east (m)</label><input type="number" id="gDx" step="0.5" value="0"></div>
+                <div class="cfield"><label class="lbl" for="gDy">north (m)</label><input type="number" id="gDy" step="0.5" value="0"></div>
+                <div class="cfield"><label class="lbl" for="gRot">turn (°)</label><input type="number" id="gRot" step="0.1" value="0"></div>
+              </div>
+            </details>
           </div>
 
           <div class="pj-group">
@@ -115,6 +151,7 @@ if (/[?&]out\b/.test(location.search)) document.documentElement.classList.add('p
         <li><div class="n">Model</div><div><p>Projection needs a matte white surface: plaster casts from the mould are ideal, white PLA prints work well, and carved MDF or card models need a coat of matte white primer. Darken the room.</p></div></li>
         <li><div class="n">Calibrate</div><div><p>Turn on <b>Show handles</b>. Drag the four corners onto the corners of the model's base, then set the lens height (measured from the table) and move the projector east and north until the red crosshairs land on the real hilltops. The grid and contours should now hug the terrain.</p></div></li>
         <li><div class="n">Teach</div><div><p>Play the sun through a day in December and in June, raise the water to find the flood line, show where slopes are too steep for an accessible route, or load a student's site plan to project their proposal onto the ground.</p></div></li>
+        <li><div class="n">GIS data</div><div><p>In QGIS, right-click a layer › <b>Export › Save Features As</b>, format <b>GeoJSON</b>, CRS <b>EPSG:2157 (ITM)</b> or EPSG:4326. In ArcGIS Pro use <b>Features To JSON</b> with <b>Output to GeoJSON</b> and <b>Project to WGS 84</b> ticked, or paste the address of a shared ArcGIS Online layer (it ends <code>/FeatureServer/0</code>). Sites built from GSI lidar tiles already know where they are on the map; for a site from an STL, type the ITM easting and northing of its south-west corner under <b>Where the data sits</b>. Use thick lines and strong colours: fine detail is lost on the model. <b>Colour by</b> shades a layer by one of its fields, such as zoning objective or route number; <b>Animate</b> runs dashes along routes.</p></div></li>
       </ol>
     </div>
   </section>
@@ -133,6 +170,8 @@ if (/[?&]out\b/.test(location.search)) document.documentElement.classList.add('p
 <script src="vendor/three.min.js"></script>
 <script src="js/sitekit.js"></script>
 <script src="js/site.js"></script>
+<script src="js/dem-import.js"></script>
+<script src="js/gis-layers.js"></script>
 <script src="js/project.js"></script>
 </body>
 </html>
