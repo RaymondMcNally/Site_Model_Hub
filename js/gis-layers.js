@@ -6,8 +6,8 @@
    - Site metres: from the survey's south-west corner, x east, y north (plan mm = site metres × 5 at 1:200).
    - A layer is stored as read, in its own coordinate system (epsg), and converted to site metres when drawn, so
      changing the placement never needs the file again.
-   - The survey's south-west corner on the map ("origin") comes from the site pack when it was built from GeoTIFF
-     tiles, or is typed in, or is estimated from the site's latitude and longitude (good to a few metres at best).
+   - The survey's south-west corner on the map ("origin") comes from the site pack (pack.geo, or a pack built from GeoTIFF
+     tiles), or is typed in, or is estimated from the site's latitude and longitude (good to a few metres at best).
    Feature shape (raw and converted): { t: 'T' points [[x,y]…] | 'L' lines [[[x,y]…]…] | 'P' polygons [[[ring]…]…], p: properties } */
 (function (root) {
   'use strict';
@@ -88,7 +88,8 @@
   function origin(pack, G, place) {
     place = place || {};
     const src = pack.source || {};
-    const packGeo = src.type === 'geotiff' && src.origin && D() && D().crsOf(src.epsg) ? { epsg: src.epsg, E: +src.origin[0], N: +src.origin[1] } : null;
+    const geo = pack.geo && pack.geo.origin && D() && D().crsOf(pack.geo.epsg) ? { epsg: pack.geo.epsg, E: +pack.geo.origin[0], N: +pack.geo.origin[1] } : null;   // georeferenced after the fact (e.g. matched to a DEM)
+    const packGeo = geo || (src.type === 'geotiff' && src.origin && D() && D().crsOf(src.epsg) ? { epsg: src.epsg, E: +src.origin[0], N: +src.origin[1] } : null);
     if (place.E !== '' && place.E != null && place.N !== '' && place.N != null && isFinite(+place.E) && isFinite(+place.N)) {
       return { epsg: packGeo ? packGeo.epsg : 2157, E: +place.E, N: +place.N, approx: false, source: 'typed' };
     }

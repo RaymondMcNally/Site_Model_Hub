@@ -624,8 +624,8 @@
     $('gE').placeholder = def ? def.E.toFixed(0) : 'easting'; $('gN').placeholder = def ? def.N.toFixed(0) : 'northing';
     const sys = o ? epsgName(o.epsg) : 'ITM';
     $('gOrigNote').textContent = !o ? 'This site has no map position yet: type the easting and northing (ITM) of the survey\'s south-west corner.'
-      : o.source === 'pack' ? `From the survey tiles: the south-west corner is E ${o.E.toFixed(1)}, N ${o.N.toFixed(1)} (${sys}). Leave the boxes empty to use it.`
-      : o.source === 'typed' ? `Using the corner you typed (${sys}). Empty both boxes to go back to ${packGeo ? 'the survey tiles' : 'the estimate'}.`
+      : o.source === 'pack' ? `From the site's survey: the south-west corner is E ${o.E.toFixed(1)}, N ${o.N.toFixed(1)} (${sys}). Leave the boxes empty to use it.`
+      : o.source === 'typed' ? `Using the corner you typed (${sys}). Empty both boxes to go back to ${packGeo || pack.geo ? 'the survey' : 'the estimate'}.`
       : `Estimated from the site's latitude and longitude (${(+pack.lat).toFixed(4)}, ${(+pack.lon).toFixed(4)}), so it can be tens of metres out. Type the ITM easting and northing of the survey's south-west corner for an exact fit, then use the nudges.`;
     const tweak = +S.gisPlace.dx || +S.gisPlace.dy || +S.gisPlace.rot ? ' · nudged' : '';
     $('gPlaceSum').textContent = (!o ? 'not set' : o.source === 'pack' ? 'from the survey tiles' : o.source === 'typed' ? 'typed in' : 'estimated') + tweak;
